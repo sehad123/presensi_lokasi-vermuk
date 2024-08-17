@@ -330,6 +330,8 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
         date1.day == date2.day;
   }
 
+// ... kode lainnya tetap
+
   @override
   Widget build(BuildContext context) {
     var jadwal = widget.jadwalData;
@@ -339,7 +341,6 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
     if (jadwal['tanggal'] != null && jadwal['tanggal'] is Timestamp) {
       dateTime = (jadwal['tanggal'] as Timestamp).toDate();
     }
-// bool _isTargetAddressVisible = false;
 
     bool isOnline = jadwal['status'] == 'Online';
     DateTime now = DateTime.now();
@@ -359,8 +360,6 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
         now.isAfter(startTime) &&
         now.isBefore(endTime);
 
-    // bool canCheckIn = now.isAfter(startTime) && now.isBefore(endTime);
-
     return Scaffold(
       appBar: AppBar(
         title: Text("Presensi Mahasiswa"),
@@ -379,41 +378,39 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
                       Center(child: CircularProgressIndicator())
                     else if (!isOnline && _currentPosition != null)
                       Container(
-                          height: 200,
-                          child: FlutterMap(
-                            mapController: _mapController,
-                            options: MapOptions(
-                              initialCenter: _currentPosition != null
-                                  ? LatLng(_currentPosition!.latitude,
-                                      _currentPosition!.longitude)
-                                  : _referenceLocation,
-                              initialZoom: 15.0,
+                        height: 200,
+                        child: FlutterMap(
+                          mapController: _mapController,
+                          options: MapOptions(
+                            initialCenter: LatLng(_currentPosition!.latitude,
+                                _currentPosition!.longitude),
+                            initialZoom: 15.0,
+                          ),
+                          children: [
+                            TileLayer(
+                              urlTemplate:
+                                  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                              subdomains: ['a', 'b', 'c'],
                             ),
-                            children: [
-                              TileLayer(
-                                urlTemplate:
-                                    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                                subdomains: ['a', 'b', 'c'],
-                              ),
-                              CircleLayer(
-                                circles: [
-                                  CircleMarker(
-                                    point: LatLng(_referenceLocation.latitude,
-                                        _referenceLocation.longitude),
-                                    color: Colors.blue.withOpacity(0.3),
-                                    radius:
-                                        _radius, // Display the radius on the map
-                                  ),
-                                  CircleMarker(
-                                    point: LatLng(_currentPosition!.latitude,
-                                        _currentPosition!.longitude),
-                                    color: Colors.blue.withOpacity(0.7),
-                                    radius: 12,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          )),
+                            CircleLayer(
+                              circles: [
+                                CircleMarker(
+                                  point: LatLng(_referenceLocation.latitude,
+                                      _referenceLocation.longitude),
+                                  color: Colors.blue.withOpacity(0.3),
+                                  radius: _radius,
+                                ),
+                                CircleMarker(
+                                  point: LatLng(_currentPosition!.latitude,
+                                      _currentPosition!.longitude),
+                                  color: Colors.blue.withOpacity(0.7),
+                                  radius: 12,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
@@ -433,18 +430,10 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
                               'Kelas: ${jadwal['class_id'] ?? 'Unknown Kelas'}'),
                           Text(
                               'Dosen: ${jadwal['dosen_id'] ?? 'Unknown Dosen'}'),
-
                           Text(
                               'Jam: ${jamMulai.toString().padLeft(2, '0')}:${menitMulai.toString().padLeft(2, '0')} - ${jamAkhir.toString().padLeft(2, '0')}:${menitAkhir.toString().padLeft(2, '0')}'),
                           Text(
                               'Status: ${jadwal['status'] ?? 'Unknown Status'}'),
-                          // if (_targetAddress != null) ...[
-                          //   SizedBox(height: 8),
-                          //   Text(
-                          //     'Alamat Lokasi Target: $_targetAddress',
-                          //     style: TextStyle(color: Colors.blue),
-                          //   ),
-                          // ],
                           if (jadwal['status'] == 'Offline' &&
                               jadwal['room_number'] != null)
                             Text('Ruangan: ${jadwal['room_number']}'),
@@ -455,17 +444,15 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
                             Text(
                                 'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}'),
                           SizedBox(height: 10),
-
                           if (!_hasCheckedIn && isInTimeRange)
                             _isLoading
                                 ? Center(child: CircularProgressIndicator())
                                 : ElevatedButton(
                                     onPressed: () {
                                       setState(() {
-                                        _isLoading =
-                                            true; // Set loading true saat tombol diklik
+                                        _isLoading = true;
                                       });
-                                      _takePicture(); // Memanggil fungsi untuk mengambil gambar
+                                      _takePicture();
                                     },
                                     child: const Text('Presensi'),
                                   )
@@ -479,7 +466,6 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
                               'Anda sudah melakukan presensi',
                               style: TextStyle(color: Colors.red),
                             ),
-
                           SizedBox(height: 20),
                           if (_currentPosition != null)
                             FutureBuilder(
@@ -493,10 +479,7 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
                                 } else if (snapshot.hasError) {
                                   return Text('Error: ${snapshot.error}');
                                 } else {
-                                  return Text(
-                                    'Lokasi saat ini: ${snapshot.data}',
-                                    style: TextStyle(fontSize: 16),
-                                  );
+                                  return Text('Alamat Anda: ${snapshot.data}');
                                 }
                               },
                             ),

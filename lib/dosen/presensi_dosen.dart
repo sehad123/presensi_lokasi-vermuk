@@ -35,8 +35,8 @@ class _PresensiDosenState extends State<PresensiDosen> {
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false; // Tambahkan variabel untuk loading
   final LatLng _referenceLocation =
-      // LatLng(-7.5395562137055165, 110.7758042610071);
-      LatLng(-7.538542036047427, 110.62505381023126);
+      LatLng(-7.5395562137055165, 110.7758042610071);
+  // LatLng(-7.538542036047427, 110.62505381023126);
   final double _radius = 100;
 
   String? _targetAddress;
@@ -84,7 +84,6 @@ class _PresensiDosenState extends State<PresensiDosen> {
           .where('hari_id', isEqualTo: widget.jadwalData['hari_id'])
           .where('matkul_id', isEqualTo: widget.jadwalData['matkul_id'])
           .where('dosen_id', isEqualTo: widget.userData['user_id'])
-          .where('email_id', isEqualTo: widget.userData['email'])
           .get();
 
       if (presensiSnapshot.docs.isNotEmpty) {
@@ -243,7 +242,6 @@ class _PresensiDosenState extends State<PresensiDosen> {
           .where('hari_id', isEqualTo: widget.jadwalData['hari_id'])
           .where('matkul_id', isEqualTo: widget.jadwalData['matkul_id'])
           .where('dosen_id', isEqualTo: widget.userData['user_id'])
-          .where('email_id', isEqualTo: widget.userData['email'])
           .get();
       if (presensiSnapshot.docs.isNotEmpty) {
         setState(() {
@@ -282,11 +280,6 @@ class _PresensiDosenState extends State<PresensiDosen> {
             widget.userData['user_type'] == 3 ? widget.userData['nama'] : null,
         'dosen_id':
             widget.userData['user_type'] == 2 ? widget.userData['nama'] : null,
-        'presensi_type': presensiType,
-        'email_student':
-            widget.userData['user_type'] == 3 ? widget.userData['email'] : null,
-        'email_dosen':
-            widget.userData['user_type'] == 2 ? widget.userData['email'] : null,
         'presensi_type': presensiType,
         'created_by': widget.userData['nama'],
         'created_at': DateTime.now(),
@@ -363,7 +356,7 @@ class _PresensiDosenState extends State<PresensiDosen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Presensi Mahasiswa"),
+        title: Text("Presensi Dosen"),
         backgroundColor: Colors.blue,
       ),
       body: RefreshIndicator(

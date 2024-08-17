@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:presensi_api/dosen/presensi_dosen.dart';
 import 'package:presensi_api/mahasiswa/presensi_mahasiswa.dart';
-import 'package:presensi_api/menu_page.dart'; // Import paket intl
 
 class JadwalDosenSTIS extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -26,7 +26,8 @@ class _JadwalDosenSTISState extends State<JadwalDosenSTIS> {
   @override
   void initState() {
     super.initState();
-    currentUserId = widget.userData['id'];
+    currentUserId = widget.userData[
+        'nama']; // Pastikan 'id' di sini adalah key yang tepat untuk user_id
     _fetchHari();
   }
 
@@ -45,6 +46,8 @@ class _JadwalDosenSTISState extends State<JadwalDosenSTIS> {
     }
 
     query = query.where('dosen_id', isEqualTo: currentUserId);
+
+    print('Filtering jadwal with dosen_id: $currentUserId'); // Debugging log
 
     return query.snapshots();
   }
@@ -156,7 +159,7 @@ class _JadwalDosenSTISState extends State<JadwalDosenSTIS> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => PresensiMahasiswa(
+                                builder: (context) => PresensiDosen(
                                   jadwalData:
                                       jadwal, // Kirim data jadwal yang dipilih
                                   userData: widget

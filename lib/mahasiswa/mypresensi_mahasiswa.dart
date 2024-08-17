@@ -32,7 +32,7 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
   Stream<QuerySnapshot<Map<String, dynamic>>> _getJadwalStream() {
     Query<Map<String, dynamic>> query = _firestore
         .collection('presensi')
-        .where('email_student', isEqualTo: widget.userData['email']);
+        .where('student_id', isEqualTo: widget.userData['nama']);
 
     if (selectedDate != null) {
       var startDate = DateTime(
@@ -226,6 +226,8 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
                                   'Kelas: ${jadwal['class_id'] ?? 'Unknown Class'}'),
                               Text(
                                   'Mata Kuliah: ${jadwal['matkul_id'] ?? 'Unknown Matkul'}'),
+                              Text(
+                                  'Dosen: ${jadwal['dosen'] ?? 'Unknown Dosen'}'),
                               Text(
                                   'Status: ${jadwal['presensi_type'] ?? 'Unknown Type'}'),
                               if (dateTime != null)

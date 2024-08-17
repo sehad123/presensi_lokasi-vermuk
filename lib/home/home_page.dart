@@ -74,17 +74,6 @@ class _HomePageState extends State<HomePage> {
         case 2:
           switch (_selectedIndex) {
             case 0:
-              return JadwalMahasiswastis(userData: _userData!);
-            case 1:
-              return RekapPresensiMahasiswa(userData: _userData!);
-            case 2:
-              return ProfilePage(userData: _userData!);
-            default:
-              return Center(child: Text('Page not found'));
-          }
-        case 3:
-          switch (_selectedIndex) {
-            case 0:
               return JadwalDosenSTIS(userData: _userData!);
             case 1:
               return RekapPresensiDosen(userData: _userData!);
@@ -96,58 +85,88 @@ class _HomePageState extends State<HomePage> {
               return Center(child: Text('Page not found'));
           }
         default:
-          return Center(child: Text('Page not found'));
+          switch (_selectedIndex) {
+            case 0:
+              return JadwalMahasiswastis(userData: _userData!);
+            case 1:
+              return RekapPresensiMahasiswa(userData: _userData!);
+            case 2:
+              return ProfilePage(userData: _userData!);
+            default:
+              return Center(child: Text('Page not found'));
+          }
+      }
+    }
+
+    List<BottomNavigationBarItem> _getBottomNavigationBarItems() {
+      if (_userData == null) {
+        return [];
+      }
+
+      switch (_userData!['user_type']) {
+        case 1:
+          return [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard),
+              label: 'Dashboard',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.menu),
+              label: 'Menu',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+          ];
+        case 2:
+          return [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard),
+              label: 'Jadwal',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.line_style_sharp),
+              label: 'Presensi Saya',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.list),
+              label: 'Presensi Mahasiswa',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+          ];
+        default:
+          return [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard),
+              label: 'Jadwal',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.menu),
+              label: 'Kehadiran',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+          ];
       }
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text('Presensi')),
-      body: _getSelectedPage(),
-      bottomNavigationBar: BottomNavigationBar(
-        items: _userData == null
-            ? []
-            : _userData!['user_type'] == 3
-                ? <BottomNavigationBarItem>[
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.dashboard),
-                      label: 'Jadwal',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.list_sharp),
-                      label: 'Presensi Saya',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.list),
-                      label: 'Presensi Mahasiswa',
-                    ),
-                    const BottomNavigationBarItem(
-                      icon: Icon(Icons.person),
-                      label: 'Profile',
-                    ),
-                  ]
-                : <BottomNavigationBarItem>[
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.dashboard),
-                      label:
-                          _userData!['user_type'] == 1 ? 'Dashboard' : 'Jadwal',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.menu),
-                      label:
-                          _userData!['user_type'] == 1 ? 'Menu' : 'Kehadiran',
-                    ),
-                    const BottomNavigationBarItem(
-                      icon: Icon(Icons.person),
-                      label: 'Profile',
-                    ),
-                  ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
-        onTap: _onItemTapped,
-      ),
-    );
+        appBar: AppBar(title: Text('Presensi')),
+        body: _getSelectedPage(),
+        bottomNavigationBar: BottomNavigationBar(
+          items: _getBottomNavigationBarItems(),
+          currentIndex: _selectedIndex,
+          selectedItemColor: Colors.blue, // Warna ikon yang dipilih
+          unselectedItemColor: Colors.grey, // Warna ikon yang tidak dipilih
+          backgroundColor:
+              Colors.white, // Warna latar belakang BottomNavigationBar
+          onTap: _onItemTapped,
+        ));
   }
 }
-
-// Placeholder pages for additional menus
-

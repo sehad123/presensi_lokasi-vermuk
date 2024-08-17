@@ -18,6 +18,66 @@ class _RekapPresensiMahasiswaFilteredState
   String? selectedMatkul;
   String? selectedStudent;
   String? selectedClass;
+  String? selectedSemester;
+
+  List<String> semesterList = [];
+  List<String> kelasList = [];
+  List<String> matkulList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchSemesterList();
+  }
+
+  Future<void> fetchSemesterList() async {
+    var snapshot =
+        await FirebaseFirestore.instance.collection('semester').get();
+    setState(() {
+      semesterList = snapshot.docs.map((doc) => doc.id).toList();
+    });
+  }
+
+  Future<void> fetchKelasList(String semesterId) async {
+    var snapshot = await FirebaseFirestore.instance
+        .collection('class_semester')
+        .where('semester_id', isEqualTo: semesterId)
+        .get();
+
+    var classIds =
+        snapshot.docs.map((doc) => doc['class_id'] as String).toList();
+
+    var classSnapshot = await FirebaseFirestore.instance
+        .collection('kelas')
+        .where(FieldPath.documentId, whereIn: classIds)
+        .get();
+
+    setState(() {
+      kelasList = classSnapshot.docs.map((doc) => doc.id).toList();
+    });
+  }
+
+  Future<void> fetchMatkulList(String classId) async {
+    var snapshot = await FirebaseFirestore.instance
+        .collection('matkul_class')
+        .where('class_id', isEqualTo: classId)
+        .get();
+
+    var matkulIds = snapshot.docs
+        .map((doc) => doc['matkul_id'] as List)
+        .expand((x) => x)
+        .toList();
+
+    var matkulSnapshot = await FirebaseFirestore.instance
+        .collection('matkul')
+        .where(FieldPath.documentId, whereIn: matkulIds)
+        .get();
+
+    setState(() {
+      matkulList =
+          matkulSnapshot.docs.map((doc) => doc['name'] as String).toList();
+    });
+  }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -42,6 +102,9 @@ class _RekapPresensiMahasiswaFilteredState
     if (selectedClass != null && selectedClass!.isNotEmpty) {
       query = query.where('class_id', isEqualTo: selectedClass);
     }
+    if (selectedMatkul != null && selectedMatkul!.isNotEmpty) {
+      query = query.where('matkul_id', isEqualTo: selectedMatkul);
+    }
     if (selectedTanggal != null) {
       DateTime startOfDay = DateTime(
           selectedTanggal!.year, selectedTanggal!.month, selectedTanggal!.day);
@@ -63,36 +126,62 @@ class _RekapPresensiMahasiswaFilteredState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Filter Nama
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Cari Nama',
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  selectedStudent =
-                      value.trim(); // Remove leading/trailing spaces
-                });
-              },
+            // Filter Mata Kuliah
+            // Row for filters
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      labelText: 'Cari Nama',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedStudent = value.trim();
+                      });
+                    },
+                  ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      labelText: 'Semester',
+                      border: OutlineInputBorder(),
+                    ),
+                    value: selectedSemester,
+                    items: semesterList
+                        .map((semester) => DropdownMenuItem<String>(
+                              value: semester,
+                              child: Text(semester),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedSemester = value;
+                        fetchKelasList(value!);
+                        selectedClass = null;
+                        matkulList = [];
+                        selectedMatkul = null;
+                      });
+                    },
+                  ),
+                ),
+              ],
             ),
             SizedBox(height: 16),
-            // Filter Kelas dan Tanggal
+            // Row for filters
             Row(
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     decoration: InputDecoration(
-                      labelText: 'Pilih Tingkat',
+                      labelText: 'Kelas',
                       border: OutlineInputBorder(),
                     ),
                     value: selectedClass,
-                    items: <String>[
-                      '1',
-                      '2',
-                      '3',
-                      '4',
-                    ] // Ganti dengan kelas yang sesuai
+                    items: kelasList
                         .map((kelas) => DropdownMenuItem<String>(
                               value: kelas,
                               child: Text(kelas),
@@ -101,6 +190,8 @@ class _RekapPresensiMahasiswaFilteredState
                     onChanged: (value) {
                       setState(() {
                         selectedClass = value;
+                        fetchMatkulList(value!);
+                        selectedMatkul = null;
                       });
                     },
                   ),
@@ -133,6 +224,27 @@ class _RekapPresensiMahasiswaFilteredState
             ),
             SizedBox(height: 16),
             // Daftar Presensi
+
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: 'Mata Kuliah',
+                border: OutlineInputBorder(),
+              ),
+              value: selectedMatkul,
+              items: matkulList
+                  .map((matkul) => DropdownMenuItem<String>(
+                        value: matkul,
+                        child: Text(matkul),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedMatkul = value;
+                });
+              },
+            ),
+            SizedBox(height: 16),
+
             Expanded(
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: _getPresensiStream(),
@@ -169,42 +281,36 @@ class _RekapPresensiMahasiswaFilteredState
                               jadwal['face_image'] != null
                                   ? Image.network(
                                       jadwal['face_image'],
-                                      width: 50, // Lebar gambar
-                                      height: 50, // Tinggi gambar
-                                      fit: BoxFit.cover,
-                                    )
-                                  : Container(
                                       width: 50,
                                       height: 50,
-                                      color: Colors.grey,
-                                      child: Icon(Icons.person,
-                                          color: Colors.white),
-                                    ),
-                              SizedBox(width: 10),
-                              // Menampilkan informasi lainnya
+                                      fit: BoxFit.cover,
+                                    )
+                                  : SizedBox(width: 50, height: 50),
+                              SizedBox(width: 8),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Nama: ${jadwal['student_id'] ?? 'Unknown Student'}',
+                                      'Nama: ${jadwal['student_id'] ?? 'N/A'}',
                                       style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                          fontWeight: FontWeight.bold),
                                     ),
                                     Text(
-                                      'Kelas: ${jadwal['class_id'] ?? 'Unknown Class'}',
+                                      'Tanggal: ${dateTime != null ? DateFormat('d MMMM yyyy').format(dateTime) : 'N/A'}',
                                     ),
                                     Text(
-                                      'Mata Kuliah: ${jadwal['matkul_id'] ?? 'Unknown Matkul'}',
+                                      'Jam Presensi: ${dateTime != null ? DateFormat(' HH:mm').format(dateTime) : 'N/A'}',
+                                    ),
+                                    Text(
+                                      'Kelas: ${jadwal['class_id'] ?? 'N/A'}',
+                                    ),
+                                    Text(
+                                      'Mata Kuliah: ${jadwal['matkul_id'] ?? 'N/A'}',
                                     ),
                                     Text(
                                       'Status: ${jadwal['presensi_type'] ?? 'Unknown Type'}',
                                     ),
-                                    if (dateTime != null)
-                                      Text(
-                                        'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}',
-                                      ),
                                   ],
                                 ),
                               ),

@@ -32,7 +32,7 @@ class _RekapPresensiDosenState extends State<RekapPresensiDosen> {
   Stream<QuerySnapshot<Map<String, dynamic>>> _getJadwalStream() {
     Query<Map<String, dynamic>> query = _firestore
         .collection('presensi')
-        .where('dosen_id', isEqualTo: widget.userData['user_id']);
+        .where('dosen_id', isEqualTo: widget.userData['nama']);
 
     if (selectedDate != null) {
       var startDate = DateTime(
@@ -97,7 +97,7 @@ class _RekapPresensiDosenState extends State<RekapPresensiDosen> {
         title: Row(
           children: [
             Expanded(
-              child: Text('Rekap Presensi'),
+              child: Text('Presensi Saya'),
             ),
             DropdownButton<String>(
               value: selectedTahun,
@@ -214,7 +214,7 @@ class _RekapPresensiDosenState extends State<RekapPresensiDosen> {
                                 )
                               : Icon(Icons.person, size: 50),
                           title: Text(
-                            '${jadwal['dosen_id'] ?? 'Unknown Student'}',
+                            '${jadwal['dosen_id'] ?? 'Unknown Dosen'}',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                             ),

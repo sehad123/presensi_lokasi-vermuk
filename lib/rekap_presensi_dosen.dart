@@ -15,9 +15,7 @@ class _RekapPresensiDosenFilteredState
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   DateTime? selectedTanggal;
-  String? selectedMatkul;
-  String? selectedStudent;
-  String? selectedClass;
+  String? selectedDosen;
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -26,22 +24,21 @@ class _RekapPresensiDosenFilteredState
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
     );
-    if (picked != null && picked != selectedTanggal)
+    if (picked != null && picked != selectedTanggal) {
       setState(() {
         selectedTanggal = picked;
       });
+    }
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _getPresensiStream() {
     Query<Map<String, dynamic>> query =
         _firestore.collection('presensi').where('student_id', isEqualTo: null);
 
-    if (selectedStudent != null && selectedStudent!.isNotEmpty) {
-      query = query.where('created_by', isEqualTo: selectedStudent);
+    if (selectedDosen != null && selectedDosen!.isNotEmpty) {
+      query = query.where('created_by', isEqualTo: selectedDosen);
     }
-    if (selectedClass != null && selectedClass!.isNotEmpty) {
-      query = query.where('class_id', isEqualTo: selectedClass);
-    }
+
     if (selectedTanggal != null) {
       DateTime startOfDay = DateTime(
           selectedTanggal!.year, selectedTanggal!.month, selectedTanggal!.day);
@@ -55,6 +52,22 @@ class _RekapPresensiDosenFilteredState
     return query.snapshots();
   }
 
+  Future<List<DropdownMenuItem<String>>> _getDosenList() async {
+    QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection('users')
+        .where('user_type', isEqualTo: 2)
+        .get();
+
+    List<DropdownMenuItem<String>> dosenItems = snapshot.docs.map((doc) {
+      return DropdownMenuItem<String>(
+        value: doc.id,
+        child: Text(doc['nama'] ?? 'Unknown Dosen'),
+      );
+    }).toList();
+
+    return dosenItems;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,67 +76,49 @@ class _RekapPresensiDosenFilteredState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Filter Nama
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Cari Nama',
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  selectedStudent = value;
-                });
+            // Filter Dosen
+            FutureBuilder<List<DropdownMenuItem<String>>>(
+              future: _getDosenList(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                return DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: 'Pilih Dosen',
+                    border: OutlineInputBorder(),
+                  ),
+                  value: selectedDosen,
+                  items: snapshot.data!,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedDosen = value;
+                    });
+                  },
+                );
               },
             ),
             SizedBox(height: 16),
-            // Filter Kelas dan Tanggal
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      labelText: 'Mata kuliah',
-                      border: OutlineInputBorder(),
-                    ),
-                    value: selectedClass,
-                    items: <String>[] // Ganti dengan kelas yang sesuai
-                        .map((kelas) => DropdownMenuItem<String>(
-                              value: kelas,
-                              child: Text(kelas),
-                            ))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedClass = value;
-                      });
-                    },
-                  ),
+            // Filter Tanggal
+            InkWell(
+              onTap: () => _selectDate(context),
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: 'Tanggal',
+                  border: OutlineInputBorder(),
                 ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: InkWell(
-                    onTap: () => _selectDate(context),
-                    child: InputDecorator(
-                      decoration: InputDecoration(
-                        labelText: 'Tanggal',
-                        border: OutlineInputBorder(),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            selectedTanggal != null
-                                ? DateFormat('d MMMM yyyy')
-                                    .format(selectedTanggal!)
-                                : 'Pilih Tanggal',
-                          ),
-                          Spacer(),
-                          Icon(Icons.calendar_today, size: 20),
-                        ],
-                      ),
+                child: Row(
+                  children: [
+                    Text(
+                      selectedTanggal != null
+                          ? DateFormat('d MMMM yyyy').format(selectedTanggal!)
+                          : 'Pilih Tanggal',
                     ),
-                  ),
+                    Spacer(),
+                    Icon(Icons.calendar_today, size: 20),
+                  ],
                 ),
-              ],
+              ),
             ),
             SizedBox(height: 16),
             // Daftar Presensi
@@ -181,7 +176,7 @@ class _RekapPresensiDosenFilteredState
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Nama: ${jadwal['dosen_id'] ?? 'Unknown Student'}',
+                                      'Nama Dosen: ${jadwal['dosen_name'] ?? 'Unknown Dosen'}',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -191,6 +186,9 @@ class _RekapPresensiDosenFilteredState
                                     ),
                                     Text(
                                       'Mata Kuliah: ${jadwal['matkul_id'] ?? 'Unknown Matkul'}',
+                                    ),
+                                    Text(
+                                      'Jam Presensi: ${dateTime != null ? DateFormat(' HH:mm').format(dateTime) : 'N/A'}',
                                     ),
                                     Text(
                                       'Status: ${jadwal['presensi_type'] ?? 'Unknown Type'}',
