@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:presensi_api/dosen/add_dosen.dart';
-import 'package:presensi_api/mahasiswa/add_mahasiswa.dart';
+import 'package:presensi_app/dosen/add_dosen.dart';
+import 'package:presensi_app/mahasiswa/add_mahasiswa.dart';
 
 class ListDosen extends StatefulWidget {
   @override

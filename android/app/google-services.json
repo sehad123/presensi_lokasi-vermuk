@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:1024392596116:android:7da8d8a5bb054b34c28281",
         "android_client_info": {
-          "package_name": "com.example.presensi_api"
+          "package_name": "com.example.presensi_app"
         }
       },
       "oauth_client": [],
@@ -66,7 +66,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:1024392596116:android:0dff4f89761b75f4c28281",
         "android_client_info": {
-          "package_name": "com.presensi_api"
+          "package_name": "com.presensi_app"
         }
       },
       "oauth_client": [],

@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:presensi_api/matkul_class/add_matkul_class.dart';
+import 'package:presensi_app/matkul_class/add_matkul_class.dart';
 
 class MatkulClassListPage extends StatefulWidget {
   @override

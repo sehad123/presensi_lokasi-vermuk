@@ -42,7 +42,7 @@ class _SplashScreenState extends State<SplashScreen> {
             Icon(Icons.school, size: 100, color: Colors.white),
             SizedBox(height: 20),
             Text(
-              'SIPADU',
+              'Presensi APP',
               style: TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.bold,

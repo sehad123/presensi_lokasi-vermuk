@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:presensi_api/firebase_setup.dart';
-import 'package:presensi_api/home/home_page.dart';
-import 'package:presensi_api/splash_screen.dart';
-import 'package:presensi_api/login/login_page.dart';
+import 'package:presensi_app/firebase_setup.dart';
+import 'package:presensi_app/home/home_page.dart';
+import 'package:presensi_app/splash_screen.dart';
+import 'package:presensi_app/login/login_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,7 +51,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SIPADU',
+      title: 'Presensi APP',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),

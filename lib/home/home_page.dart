@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:presensi_api/dashboard.dart';
-import 'package:presensi_api/dosen/jadwal_dosen.dart';
-import 'package:presensi_api/dosen/mypresensi_dosen.dart';
-import 'package:presensi_api/mahasiswa/jadwal_mahasiswa.dart';
-import 'package:presensi_api/mahasiswa/mypresensi_mahasiswa.dart';
-import 'package:presensi_api/menu_page.dart';
-import 'package:presensi_api/profile/profile_page.dart';
-import 'package:presensi_api/rekap_presensi_mahasiswa.dart';
+import 'package:presensi_app/dashboard.dart';
+import 'package:presensi_app/dosen/jadwal_dosen.dart';
+import 'package:presensi_app/dosen/mypresensi_dosen.dart';
+import 'package:presensi_app/mahasiswa/jadwal_mahasiswa.dart';
+import 'package:presensi_app/mahasiswa/mypresensi_mahasiswa.dart';
+import 'package:presensi_app/menu_page.dart';
+import 'package:presensi_app/profile/profile_page.dart';
+import 'package:presensi_app/rekap_presensi_mahasiswa.dart';
 
 class HomePage extends StatefulWidget {
   final String userId;

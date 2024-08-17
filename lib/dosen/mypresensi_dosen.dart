@@ -15,26 +15,19 @@ class RekapPresensiDosen extends StatefulWidget {
 class _RekapPresensiDosenState extends State<RekapPresensiDosen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  DateTime? selectedDate;
-  String? selectedBulan;
+  DateTime? selectedDate = DateTime.now(); // Set default to today's date
   String? selectedTahun;
+  bool showAllPresensi = false; // Flag to toggle between filtered and all data
 
-  List<String> bulanList = List.generate(
-      12, (index) => DateFormat('MMMM').format(DateTime(0, index + 1)));
   List<String> tahunList =
       List.generate(4, (index) => (DateTime.now().year - 3 + index).toString());
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _getJadwalStream() {
     Query<Map<String, dynamic>> query = _firestore
         .collection('presensi')
         .where('dosen_id', isEqualTo: widget.userData['nama']);
 
-    if (selectedDate != null) {
+    if (!showAllPresensi && selectedDate != null) {
       var startDate = DateTime(
           selectedDate!.year, selectedDate!.month, selectedDate!.day, 0, 0, 0);
       var endDate = DateTime(selectedDate!.year, selectedDate!.month,
@@ -45,18 +38,7 @@ class _RekapPresensiDosenState extends State<RekapPresensiDosen> {
           .where('tanggal', isLessThan: Timestamp.fromDate(endDate));
     }
 
-    if (selectedBulan != null && selectedTahun != null) {
-      var startDate = DateTime(
-          int.parse(selectedTahun!), bulanList.indexOf(selectedBulan!) + 1, 1);
-      var endDate = DateTime(
-          int.parse(selectedTahun!), bulanList.indexOf(selectedBulan!) + 2, 1);
-      query = query
-          .where('tanggal',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-          .where('tanggal', isLessThan: Timestamp.fromDate(endDate));
-    }
-
-    if (selectedTahun != null) {
+    if (selectedTahun != null && !showAllPresensi) {
       var startDate = DateTime(int.parse(selectedTahun!), 1, 1);
       var endDate = DateTime(int.parse(selectedTahun!) + 1, 1, 1);
       query = query
@@ -70,9 +52,15 @@ class _RekapPresensiDosenState extends State<RekapPresensiDosen> {
 
   void resetFilters() {
     setState(() {
-      selectedDate = null;
-      selectedBulan = null;
+      selectedDate = DateTime.now();
       selectedTahun = null;
+      showAllPresensi = false;
+    });
+  }
+
+  void toggleShowAllPresensi() {
+    setState(() {
+      showAllPresensi = !showAllPresensi;
     });
   }
 
@@ -90,37 +78,35 @@ class _RekapPresensiDosenState extends State<RekapPresensiDosen> {
     }
   }
 
+  void _showFullImage(String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            child: InteractiveViewer(
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Expanded(
-              child: Text('Presensi Saya'),
-            ),
-            DropdownButton<String>(
-              value: selectedTahun,
-              onChanged: (value) {
-                setState(() {
-                  selectedTahun = value;
-                });
-              },
-              items: tahunList
-                  .map((tahun) => DropdownMenuItem<String>(
-                        value: tahun,
-                        child: Text(tahun),
-                      ))
-                  .toList(),
-              hint: Text('Tahun'),
-            ),
-          ],
-        ),
+        title: Text('Rekap Presensi'),
         actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: resetFilters,
-            tooltip: 'Reset Filters',
+          ElevatedButton(
+            onPressed: toggleShowAllPresensi,
+            child: Text(showAllPresensi ? ' Hari Ini' : 'Semua'),
           ),
           SizedBox(width: 16),
         ],
@@ -150,22 +136,20 @@ class _RekapPresensiDosenState extends State<RekapPresensiDosen> {
                 ),
                 SizedBox(width: 16),
                 Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: selectedBulan,
+                  child: DropdownButton<String>(
+                    value: selectedTahun,
                     onChanged: (value) {
                       setState(() {
-                        selectedBulan = value;
+                        selectedTahun = value;
                       });
                     },
-                    decoration: InputDecoration(
-                      labelText: 'Bulan',
-                    ),
-                    items: bulanList
-                        .map((bulan) => DropdownMenuItem<String>(
-                              value: bulan,
-                              child: Text(bulan),
+                    items: tahunList
+                        .map((tahun) => DropdownMenuItem<String>(
+                              value: tahun,
+                              child: Text(tahun),
                             ))
                         .toList(),
+                    hint: Text('Tahun'),
                   ),
                 ),
               ],
@@ -206,11 +190,15 @@ class _RekapPresensiDosenState extends State<RekapPresensiDosen> {
                         child: ListTile(
                           contentPadding: EdgeInsets.all(8.0),
                           leading: jadwal['face_image'] != null
-                              ? Image.network(
-                                  jadwal['face_image'],
-                                  width: 50,
-                                  height: 50,
-                                  fit: BoxFit.cover,
+                              ? GestureDetector(
+                                  onTap: () =>
+                                      _showFullImage(jadwal['face_image']),
+                                  child: Image.network(
+                                    jadwal['face_image'],
+                                    width: 50,
+                                    height: 50,
+                                    fit: BoxFit.cover,
+                                  ),
                                 )
                               : Icon(Icons.person, size: 50),
                           title: Text(
@@ -227,7 +215,12 @@ class _RekapPresensiDosenState extends State<RekapPresensiDosen> {
                               Text(
                                   'Mata Kuliah: ${jadwal['matkul_id'] ?? 'Unknown Matkul'}'),
                               Text(
+                                  'Dosen: ${jadwal['dosen'] ?? 'Unknown Dosen'}'),
+                              Text(
                                   'Status: ${jadwal['presensi_type'] ?? 'Unknown Type'}'),
+                              Text(
+                                'Jam Presensi: ${dateTime != null ? DateFormat(' HH:mm').format(dateTime) : 'N/A'}',
+                              ),
                               if (dateTime != null)
                                 Text(
                                     'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}'),

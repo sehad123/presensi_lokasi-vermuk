@@ -154,13 +154,26 @@ class _RekapPresensiDosenFilteredState
                           contentPadding: EdgeInsets.all(8.0),
                           title: Row(
                             children: [
-                              // Menampilkan gambar wajah
+                              // Menampilkan gambar wajah dengan tap untuk melihat full screen
                               jadwal['face_image'] != null
-                                  ? Image.network(
-                                      jadwal['face_image'],
-                                      width: 50, // Lebar gambar
-                                      height: 50, // Tinggi gambar
-                                      fit: BoxFit.cover,
+                                  ? GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                FullScreenImage(
+                                              imageUrl: jadwal['face_image'],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: Image.network(
+                                        jadwal['face_image'],
+                                        width: 50,
+                                        height: 50,
+                                        fit: BoxFit.cover,
+                                      ),
                                     )
                                   : Container(
                                       width: 50,
@@ -210,6 +223,26 @@ class _RekapPresensiDosenFilteredState
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class FullScreenImage extends StatelessWidget {
+  final String imageUrl;
+
+  const FullScreenImage({Key? key, required this.imageUrl}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Full Screen Image'),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          child: Image.network(imageUrl),
         ),
       ),
     );

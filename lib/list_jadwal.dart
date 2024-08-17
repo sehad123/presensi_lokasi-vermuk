@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Import paket intl
-import 'package:presensi_api/edit_jadwal.dart';
-import 'package:presensi_api/jadwal.dart';
+import 'package:presensi_app/edit_jadwal.dart';
+import 'package:presensi_app/jadwal.dart';
 
 class ListJadwal extends StatefulWidget {
   @override

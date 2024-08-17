@@ -11,7 +11,8 @@ import 'package:geocoding/geocoding.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:presensi_api/mahasiswa/mypresensi_mahasiswa.dart';
+import 'package:presensi_app/mahasiswa/mypresensi_mahasiswa.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 
 class PresensiMahasiswa extends StatefulWidget {
@@ -83,7 +84,6 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
           .where('hari_id', isEqualTo: widget.jadwalData['hari_id'])
           .where('matkul_id', isEqualTo: widget.jadwalData['matkul_id'])
           .where('student_id', isEqualTo: widget.userData['user_id'])
-          .where('email_id', isEqualTo: widget.userData['email'])
           .get();
 
       if (presensiSnapshot.docs.isNotEmpty) {
@@ -125,15 +125,29 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
     }
   }
 
+  Future<void> _checkLocation(String status) async {
+    if (status == "Offline") {
+      await _getLocation();
+    } else {
+      // Jika statusnya "Online", tidak perlu menghidupkan GPS
+      Fluttertoast.showToast(msg: 'Presensi online tidak memerlukan GPS.');
+      // Lanjutkan proses selanjutnya tanpa pengecekan lokasi
+    }
+  }
+
   Future<void> _getLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
 
+    // Mengecek apakah GPS aktif
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      setState(() {
-        _loadingLocation = false;
-      });
+      // Jika GPS tidak aktif, tampilkan peringatan dan kembali ke halaman sebelumnya
+      Fluttertoast.showToast(
+          msg: 'GPS tidak aktif. Aktifkan GPS untuk melanjutkan.');
+
+      // Kembali ke halaman sebelumnya
+      Navigator.pop(context);
       return Future.error('Location services are disabled.');
     }
 
@@ -144,6 +158,12 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
         setState(() {
           _loadingLocation = false;
         });
+        Fluttertoast.showToast(
+            msg:
+                'Izin lokasi ditolak. Aktifkan izin lokasi untuk melanjutkan.');
+
+        // Kembali ke halaman sebelumnya
+        Navigator.pop(context);
         return Future.error('Location permissions are denied');
       }
     }
@@ -152,6 +172,12 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
       setState(() {
         _loadingLocation = false;
       });
+      Fluttertoast.showToast(
+          msg:
+              'Izin lokasi ditolak secara permanen. Aktifkan izin lokasi di pengaturan.');
+
+      // Kembali ke halaman sebelumnya
+      Navigator.pop(context);
       return Future.error(
           'Location permissions are permanently denied, we cannot request permissions.');
     }
@@ -208,18 +234,23 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
 
   Future<void> _handleAttendance(
       String presensiType, String faceImageUrl) async {
+    // Pengecekan apakah status presensi bukan "Online" dan posisi saat ini null
     if (widget.jadwalData['status'] != 'Online' && _currentPosition == null) {
-      Fluttertoast.showToast(msg: 'Tidak dapat mendeteksi lokasi.');
+      Fluttertoast.showToast(
+          msg: 'Tidak dapat mendeteksi lokasi. Aktifkan GPS.');
+      await _getLocation(); // Meminta pengguna untuk mengaktifkan GPS
       return;
     }
 
     if (widget.jadwalData['status'] != 'Online') {
+      // Pengecekan jarak dari lokasi referensi
       final distance = Geolocator.distanceBetween(
         _currentPosition!.latitude,
         _currentPosition!.longitude,
         _referenceLocation.latitude,
         _referenceLocation.longitude,
       );
+
       String formattedDistance = distance.toStringAsFixed(0);
 
       print('Distance: $formattedDistance meters'); // Debugging line
@@ -242,7 +273,6 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
           .where('hari_id', isEqualTo: widget.jadwalData['hari_id'])
           .where('matkul_id', isEqualTo: widget.jadwalData['matkul_id'])
           .where('student_id', isEqualTo: widget.userData['user_id'])
-          .where('email_id', isEqualTo: widget.userData['email'])
           .get();
       if (presensiSnapshot.docs.isNotEmpty) {
         setState(() {
@@ -376,7 +406,7 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
                     SizedBox(height: 20),
                     if (_loadingLocation)
                       Center(child: CircularProgressIndicator())
-                    else if (!isOnline && _currentPosition != null)
+                    else if (_currentPosition != null)
                       Container(
                         height: 200,
                         child: FlutterMap(
@@ -437,9 +467,35 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
                           if (jadwal['status'] == 'Offline' &&
                               jadwal['room_number'] != null)
                             Text('Ruangan: ${jadwal['room_number']}'),
-                          if (jadwal['status'] == 'Online' &&
-                              jadwal['link'] != null)
-                            Text('Link Zoom: ${jadwal['link']}'),
+                          if (widget.jadwalData['status'] == 'Online')
+                            GestureDetector(
+                              onTap: () async {
+                                final url = widget.jadwalData['link'];
+                                if (url != null && url.isNotEmpty) {
+                                  if (await canLaunchUrl(url)) {
+                                    await canLaunchUrl(url);
+                                  } else {
+                                    Fluttertoast.showToast(
+                                        msg:
+                                            'Tidak dapat membuka link. Pastikan URL valid.');
+                                  }
+                                } else {
+                                  Fluttertoast.showToast(
+                                      msg: 'URL tidak tersedia.');
+                                }
+                              },
+                              child: Text(
+                                'Link: ${widget.jadwalData['link']}',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors
+                                      .blue, // Memberi warna biru pada link
+                                  decoration: TextDecoration
+                                      .underline, // Menambahkan underline
+                                ),
+                              ),
+                            ),
                           if (dateTime != null)
                             Text(
                                 'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}'),
@@ -479,7 +535,8 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
                                 } else if (snapshot.hasError) {
                                   return Text('Error: ${snapshot.error}');
                                 } else {
-                                  return Text('Alamat Anda: ${snapshot.data}');
+                                  return Text(
+                                      'Lokasi Anda Saat ini: ${snapshot.data}');
                                 }
                               },
                             ),

@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:presensi_api/semester_class/add_semester_class.dart';
+import 'package:presensi_app/semester_class/add_semester_class.dart';
 
 class ListSemesterClassPage extends StatefulWidget {
   @override

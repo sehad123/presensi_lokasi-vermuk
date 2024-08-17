@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:presensi_api/dosen/list_dosen.dart';
-import 'package:presensi_api/list_jadwal.dart';
-import 'package:presensi_api/mahasiswa/list_mahasiswa.dart';
-import 'package:presensi_api/matkul_class/list_matkul_class.dart';
-import 'package:presensi_api/matkul_dosen/list_matkul_dosen.dart';
-import 'package:presensi_api/rekap_presensi_dosen.dart';
-import 'package:presensi_api/rekap_presensi_mahasiswa.dart';
-import 'package:presensi_api/semester_class/list_semester_class.dart';
+import 'package:presensi_app/dosen/list_dosen.dart';
+import 'package:presensi_app/list_jadwal.dart';
+import 'package:presensi_app/mahasiswa/list_mahasiswa.dart';
+import 'package:presensi_app/matkul_class/list_matkul_class.dart';
+import 'package:presensi_app/matkul_dosen/list_matkul_dosen.dart';
+import 'package:presensi_app/rekap_presensi_dosen.dart';
+import 'package:presensi_app/rekap_presensi_mahasiswa.dart';
+import 'package:presensi_app/semester_class/list_semester_class.dart';
 
 class MenuPage extends StatelessWidget {
   @override

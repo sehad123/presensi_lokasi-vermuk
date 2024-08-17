@@ -15,26 +15,19 @@ class RekapPresensiMahasiswa extends StatefulWidget {
 class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  DateTime? selectedDate;
-  String? selectedBulan;
+  DateTime? selectedDate = DateTime.now(); // Set default to today's date
   String? selectedTahun;
+  bool showAllPresensi = false; // Flag to toggle between filtered and all data
 
-  List<String> bulanList = List.generate(
-      12, (index) => DateFormat('MMMM').format(DateTime(0, index + 1)));
   List<String> tahunList =
       List.generate(4, (index) => (DateTime.now().year - 3 + index).toString());
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _getJadwalStream() {
     Query<Map<String, dynamic>> query = _firestore
         .collection('presensi')
         .where('student_id', isEqualTo: widget.userData['nama']);
 
-    if (selectedDate != null) {
+    if (!showAllPresensi && selectedDate != null) {
       var startDate = DateTime(
           selectedDate!.year, selectedDate!.month, selectedDate!.day, 0, 0, 0);
       var endDate = DateTime(selectedDate!.year, selectedDate!.month,
@@ -45,18 +38,7 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
           .where('tanggal', isLessThan: Timestamp.fromDate(endDate));
     }
 
-    if (selectedBulan != null && selectedTahun != null) {
-      var startDate = DateTime(
-          int.parse(selectedTahun!), bulanList.indexOf(selectedBulan!) + 1, 1);
-      var endDate = DateTime(
-          int.parse(selectedTahun!), bulanList.indexOf(selectedBulan!) + 2, 1);
-      query = query
-          .where('tanggal',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-          .where('tanggal', isLessThan: Timestamp.fromDate(endDate));
-    }
-
-    if (selectedTahun != null) {
+    if (selectedTahun != null && !showAllPresensi) {
       var startDate = DateTime(int.parse(selectedTahun!), 1, 1);
       var endDate = DateTime(int.parse(selectedTahun!) + 1, 1, 1);
       query = query
@@ -70,9 +52,15 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
 
   void resetFilters() {
     setState(() {
-      selectedDate = null;
-      selectedBulan = null;
+      selectedDate = DateTime.now();
       selectedTahun = null;
+      showAllPresensi = false;
+    });
+  }
+
+  void toggleShowAllPresensi() {
+    setState(() {
+      showAllPresensi = !showAllPresensi;
     });
   }
 
@@ -94,33 +82,11 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Expanded(
-              child: Text('Rekap Presensi'),
-            ),
-            DropdownButton<String>(
-              value: selectedTahun,
-              onChanged: (value) {
-                setState(() {
-                  selectedTahun = value;
-                });
-              },
-              items: tahunList
-                  .map((tahun) => DropdownMenuItem<String>(
-                        value: tahun,
-                        child: Text(tahun),
-                      ))
-                  .toList(),
-              hint: Text('Tahun'),
-            ),
-          ],
-        ),
+        title: Text('Rekap Presensi'),
         actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: resetFilters,
-            tooltip: 'Reset Filters',
+          ElevatedButton(
+            onPressed: toggleShowAllPresensi,
+            child: Text(showAllPresensi ? ' Hari Ini' : 'Semua'),
           ),
           SizedBox(width: 16),
         ],
@@ -150,26 +116,25 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
                 ),
                 SizedBox(width: 16),
                 Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: selectedBulan,
+                  child: DropdownButton<String>(
+                    value: selectedTahun,
                     onChanged: (value) {
                       setState(() {
-                        selectedBulan = value;
+                        selectedTahun = value;
                       });
                     },
-                    decoration: InputDecoration(
-                      labelText: 'Bulan',
-                    ),
-                    items: bulanList
-                        .map((bulan) => DropdownMenuItem<String>(
-                              value: bulan,
-                              child: Text(bulan),
+                    items: tahunList
+                        .map((tahun) => DropdownMenuItem<String>(
+                              value: tahun,
+                              child: Text(tahun),
                             ))
                         .toList(),
+                    hint: Text('Tahun'),
                   ),
                 ),
               ],
             ),
+            SizedBox(height: 16),
             SizedBox(height: 16),
             Expanded(
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -206,11 +171,34 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
                         child: ListTile(
                           contentPadding: EdgeInsets.all(8.0),
                           leading: jadwal['face_image'] != null
-                              ? Image.network(
-                                  jadwal['face_image'],
-                                  width: 50,
-                                  height: 50,
-                                  fit: BoxFit.cover,
+                              ? GestureDetector(
+                                  onTap: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return Dialog(
+                                          child: Container(
+                                            color: Colors.black,
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                Navigator.pop(context);
+                                              },
+                                              child: Image.network(
+                                                jadwal['face_image'],
+                                                fit: BoxFit.contain,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: Image.network(
+                                    jadwal['face_image'],
+                                    width: 50,
+                                    height: 50,
+                                    fit: BoxFit.cover,
+                                  ),
                                 )
                               : Icon(Icons.person, size: 50),
                           title: Text(
@@ -230,6 +218,9 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
                                   'Dosen: ${jadwal['dosen'] ?? 'Unknown Dosen'}'),
                               Text(
                                   'Status: ${jadwal['presensi_type'] ?? 'Unknown Type'}'),
+                              Text(
+                                'Jam Presensi: ${dateTime != null ? DateFormat(' HH:mm').format(dateTime) : 'N/A'}',
+                              ),
                               if (dateTime != null)
                                 Text(
                                     'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}'),

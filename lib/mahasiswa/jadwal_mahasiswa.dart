@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:presensi_api/mahasiswa/presensi_mahasiswa.dart';
-import 'package:presensi_api/menu_page.dart'; // Import paket intl
+import 'package:presensi_app/mahasiswa/presensi_mahasiswa.dart';
+import 'package:presensi_app/menu_page.dart'; // Import paket intl
 
 class JadwalMahasiswastis extends StatefulWidget {
   final Map<String, dynamic> userData;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:presensi_api/menu_page.dart';
+import 'package:presensi_app/menu_page.dart';
 
 class DashboardPage extends StatelessWidget {
   Future<int> _getCount(String collection,

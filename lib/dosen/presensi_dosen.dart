@@ -11,9 +11,10 @@ import 'package:geocoding/geocoding.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:presensi_api/dosen/mypresensi_dosen.dart';
-import 'package:presensi_api/mahasiswa/mypresensi_mahasiswa.dart';
+import 'package:presensi_app/dosen/mypresensi_dosen.dart';
+import 'package:presensi_app/mahasiswa/mypresensi_mahasiswa.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
 class PresensiDosen extends StatefulWidget {
   final Map<String, dynamic> jadwalData;
@@ -125,15 +126,29 @@ class _PresensiDosenState extends State<PresensiDosen> {
     }
   }
 
+  Future<void> _checkLocation(String status) async {
+    if (status == "Offline") {
+      await _getLocation();
+    } else {
+      // Jika statusnya "Online", tidak perlu menghidupkan GPS
+      Fluttertoast.showToast(msg: 'Presensi online tidak memerlukan GPS.');
+      // Lanjutkan proses selanjutnya tanpa pengecekan lokasi
+    }
+  }
+
   Future<void> _getLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
 
+    // Mengecek apakah GPS aktif
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      setState(() {
-        _loadingLocation = false;
-      });
+      // Jika GPS tidak aktif, tampilkan peringatan dan kembali ke halaman sebelumnya
+      Fluttertoast.showToast(
+          msg: 'GPS tidak aktif. Aktifkan GPS untuk melanjutkan.');
+
+      // Kembali ke halaman sebelumnya
+      Navigator.pop(context);
       return Future.error('Location services are disabled.');
     }
 
@@ -144,6 +159,12 @@ class _PresensiDosenState extends State<PresensiDosen> {
         setState(() {
           _loadingLocation = false;
         });
+        Fluttertoast.showToast(
+            msg:
+                'Izin lokasi ditolak. Aktifkan izin lokasi untuk melanjutkan.');
+
+        // Kembali ke halaman sebelumnya
+        Navigator.pop(context);
         return Future.error('Location permissions are denied');
       }
     }
@@ -152,6 +173,12 @@ class _PresensiDosenState extends State<PresensiDosen> {
       setState(() {
         _loadingLocation = false;
       });
+      Fluttertoast.showToast(
+          msg:
+              'Izin lokasi ditolak secara permanen. Aktifkan izin lokasi di pengaturan.');
+
+      // Kembali ke halaman sebelumnya
+      Navigator.pop(context);
       return Future.error(
           'Location permissions are permanently denied, we cannot request permissions.');
     }
@@ -441,9 +468,36 @@ class _PresensiDosenState extends State<PresensiDosen> {
                           if (jadwal['status'] == 'Offline' &&
                               jadwal['room_number'] != null)
                             Text('Ruangan: ${jadwal['room_number']}'),
-                          if (jadwal['status'] == 'Online' &&
-                              jadwal['link'] != null)
-                            Text('Link Zoom: ${jadwal['link']}'),
+                          if (widget.jadwalData['status'] == 'Online')
+                            GestureDetector(
+                              onTap: () async {
+                                final url = widget.jadwalData['link'];
+                                if (url != null && url.isNotEmpty) {
+                                  if (await canLaunchUrl(url)) {
+                                    await canLaunchUrl(url);
+                                  } else {
+                                    Fluttertoast.showToast(
+                                        msg:
+                                            'Tidak dapat membuka link. Pastikan URL valid.');
+                                  }
+                                } else {
+                                  Fluttertoast.showToast(
+                                      msg: 'URL tidak tersedia.');
+                                }
+                              },
+                              child: Text(
+                                'Link: ${widget.jadwalData['link']}',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors
+                                      .blue, // Memberi warna biru pada link
+                                  decoration: TextDecoration
+                                      .underline, // Menambahkan underline
+                                ),
+                              ),
+                            ),
+                          Text('Link Zoom: ${jadwal['link']}'),
                           if (dateTime != null)
                             Text(
                                 'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}'),
