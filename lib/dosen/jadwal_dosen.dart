@@ -4,17 +4,16 @@ import 'package:intl/intl.dart';
 import 'package:presensi_api/mahasiswa/presensi_mahasiswa.dart';
 import 'package:presensi_api/menu_page.dart'; // Import paket intl
 
-class JadwalMahasiswastis extends StatefulWidget {
+class JadwalDosenSTIS extends StatefulWidget {
   final Map<String, dynamic> userData;
 
-  const JadwalMahasiswastis({Key? key, required this.userData})
-      : super(key: key);
+  const JadwalDosenSTIS({Key? key, required this.userData}) : super(key: key);
 
   @override
-  _JadwalMahasiswastisState createState() => _JadwalMahasiswastisState();
+  _JadwalDosenSTISState createState() => _JadwalDosenSTISState();
 }
 
-class _JadwalMahasiswastisState extends State<JadwalMahasiswastis> {
+class _JadwalDosenSTISState extends State<JadwalDosenSTIS> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   String? selectedHari;
@@ -22,14 +21,12 @@ class _JadwalMahasiswastisState extends State<JadwalMahasiswastis> {
   List<String> hariList = [];
   Map<String, String> matkulMap = {};
 
-  String? currentClassId;
-  String? currentSemesterId;
+  String? currentUserId;
 
   @override
   void initState() {
     super.initState();
-    currentClassId = widget.userData['class_id'];
-    currentSemesterId = widget.userData['semester_id'];
+    currentUserId = widget.userData['id'];
     _fetchHari();
   }
 
@@ -47,8 +44,7 @@ class _JadwalMahasiswastisState extends State<JadwalMahasiswastis> {
       query = query.where('hari_id', isEqualTo: selectedHari);
     }
 
-    query = query.where('class_id', isEqualTo: currentClassId);
-    query = query.where('semester_id', isEqualTo: currentSemesterId);
+    query = query.where('dosen_id', isEqualTo: currentUserId);
 
     return query.snapshots();
   }
@@ -139,6 +135,8 @@ class _JadwalMahasiswastisState extends State<JadwalMahasiswastis> {
                                   'Hari: ${jadwal['hari_id'] ?? 'Unknown Hari'}'),
                               Text(
                                   'Kelas: ${jadwal['class_id'] ?? 'Unknown Kelas'}'),
+                              Text(
+                                  'Dosen: ${jadwal['dosen_id'] ?? 'Unknown Dosen'}'),
                               Text(
                                   'Jam: ${jadwal['jam_mulai']}:${jadwal['menit_mulai']} - ${jadwal['jam_akhir']}:${jadwal['menit_akhir']}'),
                               Text(

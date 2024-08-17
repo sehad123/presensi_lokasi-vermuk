@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:presensi_api/dashboard.dart';
+import 'package:presensi_api/dosen/jadwal_dosen.dart';
+import 'package:presensi_api/dosen/mypresensi_dosen.dart';
 import 'package:presensi_api/mahasiswa/jadwal_mahasiswa.dart';
 import 'package:presensi_api/mahasiswa/mypresensi_mahasiswa.dart';
 import 'package:presensi_api/menu_page.dart';
 import 'package:presensi_api/profile/profile_page.dart';
+import 'package:presensi_api/rekap_presensi_mahasiswa.dart';
 
 class HomePage extends StatefulWidget {
   final String userId;
@@ -56,17 +59,42 @@ class _HomePageState extends State<HomePage> {
         return Center(child: CircularProgressIndicator());
       }
 
-      switch (_selectedIndex) {
-        case 0:
-          return _userData!['user_type'] == 1
-              ? DashboardPage()
-              : JadwalMahasiswastis(userData: _userData!);
+      switch (_userData!['user_type']) {
         case 1:
-          return _userData!['user_type'] == 1
-              ? MenuPage()
-              : RekapPresensiMahasiswa(userData: _userData!);
+          switch (_selectedIndex) {
+            case 0:
+              return DashboardPage();
+            case 1:
+              return MenuPage();
+            case 2:
+              return ProfilePage(userData: _userData!);
+            default:
+              return Center(child: Text('Page not found'));
+          }
         case 2:
-          return ProfilePage(userData: _userData!);
+          switch (_selectedIndex) {
+            case 0:
+              return JadwalMahasiswastis(userData: _userData!);
+            case 1:
+              return RekapPresensiMahasiswa(userData: _userData!);
+            case 2:
+              return ProfilePage(userData: _userData!);
+            default:
+              return Center(child: Text('Page not found'));
+          }
+        case 3:
+          switch (_selectedIndex) {
+            case 0:
+              return JadwalDosenSTIS(userData: _userData!);
+            case 1:
+              return RekapPresensiDosen(userData: _userData!);
+            case 2:
+              return RekapPresensiMahasiswaFiltered();
+            case 3:
+              return ProfilePage(userData: _userData!);
+            default:
+              return Center(child: Text('Page not found'));
+          }
         default:
           return Center(child: Text('Page not found'));
       }
@@ -76,20 +104,43 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(title: Text('Presensi')),
       body: _getSelectedPage(),
       bottomNavigationBar: BottomNavigationBar(
-        items: <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: _userData!['user_type'] == 1 ? 'Dashboard' : 'Jadwal',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.menu),
-            label: _userData!['user_type'] == 1 ? 'Menu' : 'Rekapan',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+        items: _userData == null
+            ? []
+            : _userData!['user_type'] == 3
+                ? <BottomNavigationBarItem>[
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.dashboard),
+                      label: 'Jadwal',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.list_sharp),
+                      label: 'Presensi Saya',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.list),
+                      label: 'Presensi Mahasiswa',
+                    ),
+                    const BottomNavigationBarItem(
+                      icon: Icon(Icons.person),
+                      label: 'Profile',
+                    ),
+                  ]
+                : <BottomNavigationBarItem>[
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.dashboard),
+                      label:
+                          _userData!['user_type'] == 1 ? 'Dashboard' : 'Jadwal',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.menu),
+                      label:
+                          _userData!['user_type'] == 1 ? 'Menu' : 'Kehadiran',
+                    ),
+                    const BottomNavigationBarItem(
+                      icon: Icon(Icons.person),
+                      label: 'Profile',
+                    ),
+                  ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue,
         onTap: _onItemTapped,
@@ -98,23 +149,5 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// Placeholder pages for Jadwal and Rekapan
-class JadwalPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Jadwal')),
-      body: Center(child: Text('Jadwal Page')),
-    );
-  }
-}
+// Placeholder pages for additional menus
 
-class RekapanPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Rekapan')),
-      body: Center(child: Text('Rekapan Page')),
-    );
-  }
-}

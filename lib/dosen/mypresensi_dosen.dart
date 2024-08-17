@@ -2,17 +2,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class RekapPresensiMahasiswa extends StatefulWidget {
+class RekapPresensiDosen extends StatefulWidget {
   final Map<String, dynamic> userData;
 
-  const RekapPresensiMahasiswa({Key? key, required this.userData})
+  const RekapPresensiDosen({Key? key, required this.userData})
       : super(key: key);
 
   @override
-  _RekapPresensiMahasiswaState createState() => _RekapPresensiMahasiswaState();
+  _RekapPresensiDosenState createState() => _RekapPresensiDosenState();
 }
 
-class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
+class _RekapPresensiDosenState extends State<RekapPresensiDosen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   DateTime? selectedDate;
