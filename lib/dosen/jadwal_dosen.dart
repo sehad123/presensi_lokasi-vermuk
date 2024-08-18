@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:presensi_app/dosen/presensi_dosen.dart';
 import 'package:presensi_app/mahasiswa/presensi_mahasiswa.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 class JadwalDosenSTIS extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -26,9 +27,16 @@ class _JadwalDosenSTISState extends State<JadwalDosenSTIS> {
   @override
   void initState() {
     super.initState();
-    currentUserId = widget.userData[
-        'nama']; // Pastikan 'id' di sini adalah key yang tepat untuk user_id
-    _fetchHari();
+    initializeDateFormatting('id_ID', null).then((_) {
+      currentUserId = widget.userData[
+          'nama']; // Pastikan 'id' di sini adalah key yang tepat untuk user_id
+      String currentDay = DateFormat('EEEE', 'id_ID').format(DateTime.now());
+      // String currentDay = DateFormat('EEEE', 'id_ID')
+      //     .format(DateTime.now().add(Duration(days: 1)));
+      selectedHari = currentDay;
+
+      _fetchHari();
+    });
   }
 
   Future<void> _fetchHari() async {

@@ -15,7 +15,7 @@ class RekapPresensiMahasiswa extends StatefulWidget {
 class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  DateTime? selectedDate = DateTime.now(); // Set default to today's date
+  DateTime selectedDate = DateTime.now(); // Set default to today's date
   String? selectedTahun;
   bool showAllPresensi = false; // Flag to toggle between filtered and all data
 
@@ -27,11 +27,11 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
         .collection('presensi')
         .where('student_id', isEqualTo: widget.userData['nama']);
 
-    if (!showAllPresensi && selectedDate != null) {
+    if (!showAllPresensi) {
       var startDate = DateTime(
-          selectedDate!.year, selectedDate!.month, selectedDate!.day, 0, 0, 0);
-      var endDate = DateTime(selectedDate!.year, selectedDate!.month,
-          selectedDate!.day + 1, 0, 0, 0);
+          selectedDate.year, selectedDate.month, selectedDate.day, 0, 0, 0);
+      var endDate = DateTime(
+          selectedDate.year, selectedDate.month, selectedDate.day + 1, 0, 0, 0);
       query = query
           .where('tanggal',
               isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
@@ -67,7 +67,7 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate ?? DateTime.now(),
+      initialDate: selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
     );
@@ -101,9 +101,7 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
                 Expanded(
                   child: TextField(
                     controller: TextEditingController(
-                        text: selectedDate != null
-                            ? DateFormat('dd/MM/yyyy').format(selectedDate!)
-                            : ''),
+                        text: DateFormat('dd/MM/yyyy').format(selectedDate)),
                     decoration: InputDecoration(
                       labelText: 'Tanggal',
                       suffixIcon: IconButton(
@@ -134,7 +132,6 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
             SizedBox(height: 16),
             Expanded(
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(

@@ -15,6 +15,33 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   String? _errorMessage;
 
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userId = prefs.getString('user_id');
+    int? loginTimestamp = prefs.getInt('login_timestamp');
+
+    if (userId != null && loginTimestamp != null) {
+      DateTime lastLogin = DateTime.fromMillisecondsSinceEpoch(loginTimestamp);
+      if (DateTime.now().difference(lastLogin).inDays < 3) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => HomePage(userId: userId),
+          ),
+        );
+        return;
+      } else {
+        await prefs.remove('user_id');
+        await prefs.remove('login_timestamp');
+      }
+    }
+  }
+
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -29,11 +56,13 @@ class _LoginPageState extends State<LoginPage> {
           password: _passwordController.text,
         );
 
-        // Simpan userId di shared_preferences
+        // Simpan userId dan timestamp di shared_preferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('user_id', userCredential.user!.uid);
+        await prefs.setInt(
+            'login_timestamp', DateTime.now().millisecondsSinceEpoch);
 
-        // Ambil data pengguna dari Firestore dan arahkan ke HomePage
+        // Arahkan ke HomePage
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => HomePage(userId: userCredential.user!.uid),
@@ -46,7 +75,6 @@ class _LoginPageState extends State<LoginPage> {
           } else if (e.code == 'wrong-password') {
             _errorMessage = 'Wrong password provided for that user.';
           } else {
-            // _errorMessage = 'Login gagal: ${e.message}';
             _errorMessage = 'Password atau Email anda Salah';
           }
         });

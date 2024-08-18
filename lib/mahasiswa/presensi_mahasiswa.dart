@@ -312,11 +312,6 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
         'dosen_id':
             widget.userData['user_type'] == 2 ? widget.userData['nama'] : null,
         'presensi_type': presensiType,
-        'email_student':
-            widget.userData['user_type'] == 3 ? widget.userData['email'] : null,
-        'email_dosen':
-            widget.userData['user_type'] == 2 ? widget.userData['email'] : null,
-        'presensi_type': presensiType,
         'created_by': widget.userData['nama'],
         'created_at': DateTime.now(),
         'updated_at': DateTime.now(),
@@ -470,18 +465,18 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
                           if (widget.jadwalData['status'] == 'Online')
                             GestureDetector(
                               onTap: () async {
-                                final url = widget.jadwalData['link'];
-                                if (url != null && url.isNotEmpty) {
-                                  if (await canLaunchUrl(url)) {
-                                    await canLaunchUrl(url);
-                                  } else {
-                                    Fluttertoast.showToast(
-                                        msg:
-                                            'Tidak dapat membuka link. Pastikan URL valid.');
-                                  }
+                                final url =
+                                    Uri.parse(widget.jadwalData['link'] ?? '');
+                                if (url != null && url.toString().isNotEmpty) {
+                                  await launchUrl(
+                                    url,
+                                    mode: LaunchMode
+                                        .externalApplication, // Membuka link di browser eksternal
+                                  );
                                 } else {
                                   Fluttertoast.showToast(
-                                      msg: 'URL tidak tersedia.');
+                                    msg: 'URL tidak tersedia.',
+                                  );
                                 }
                               },
                               child: Text(
@@ -489,10 +484,8 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors
-                                      .blue, // Memberi warna biru pada link
-                                  decoration: TextDecoration
-                                      .underline, // Menambahkan underline
+                                  color: Colors.blue,
+                                  decoration: TextDecoration.underline,
                                 ),
                               ),
                             ),

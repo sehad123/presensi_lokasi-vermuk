@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:presensi_app/profile/profile_page.dart';
 
 class RekapPresensiMahasiswaFiltered extends StatefulWidget {
   const RekapPresensiMahasiswaFiltered({Key? key}) : super(key: key);
@@ -23,11 +24,13 @@ class _RekapPresensiMahasiswaFilteredState
   List<String> semesterList = [];
   List<String> kelasList = [];
   List<String> matkulList = [];
+  List<Map<String, dynamic>> presensiList = [];
 
   @override
   void initState() {
     super.initState();
     fetchSemesterList();
+    fetchPresensiList();
   }
 
   Future<void> fetchSemesterList() async {
@@ -79,6 +82,19 @@ class _RekapPresensiMahasiswaFilteredState
     });
   }
 
+  Future<void> fetchPresensiList() async {
+    var snapshot = await _firestore.collection('presensi').get();
+    setState(() {
+      presensiList = snapshot.docs
+          .map((doc) => {'id': doc.id, ...doc.data()})
+          .where((data) =>
+              data['student_id'] != null &&
+              data['student_id'] !=
+                  'Unknown Dosen') // Hanya tampilkan jika dosen_id valid
+          .toList();
+    });
+  }
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -90,32 +106,6 @@ class _RekapPresensiMahasiswaFilteredState
       setState(() {
         selectedTanggal = picked;
       });
-  }
-
-  Stream<QuerySnapshot<Map<String, dynamic>>> _getPresensiStream() {
-    Query<Map<String, dynamic>> query =
-        _firestore.collection('presensi').where('dosen_id', isEqualTo: null);
-
-    if (selectedStudent != null && selectedStudent!.isNotEmpty) {
-      query = query.where('student_id', isEqualTo: selectedStudent);
-    }
-    if (selectedClass != null && selectedClass!.isNotEmpty) {
-      query = query.where('class_id', isEqualTo: selectedClass);
-    }
-    if (selectedMatkul != null && selectedMatkul!.isNotEmpty) {
-      query = query.where('matkul_id', isEqualTo: selectedMatkul);
-    }
-    if (selectedTanggal != null) {
-      DateTime startOfDay = DateTime(
-          selectedTanggal!.year, selectedTanggal!.month, selectedTanggal!.day);
-      DateTime endOfDay = startOfDay.add(Duration(days: 1));
-      query = query
-          .where('tanggal',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-          .where('tanggal', isLessThan: Timestamp.fromDate(endOfDay));
-    }
-
-    return query.snapshots();
   }
 
   @override
@@ -246,117 +236,124 @@ class _RekapPresensiMahasiswaFilteredState
             SizedBox(height: 16),
 
             Expanded(
-              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream: _getPresensiStream(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+              child: ListView.builder(
+                itemCount: presensiList.length,
+                itemBuilder: (context, index) {
+                  var presensi = presensiList[index];
+
+                  if (selectedStudent != null &&
+                      selectedStudent!.isNotEmpty &&
+                      !presensi['student_id']
+                          .toString()
+                          .toLowerCase()
+                          .contains(selectedStudent!.toLowerCase())) {
+                    return SizedBox.shrink(); // Skip item
                   }
 
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
+                  if (selectedClass != null &&
+                      selectedClass!.isNotEmpty &&
+                      presensi['class_id'] != selectedClass) {
+                    return SizedBox.shrink(); // Skip item
                   }
 
-                  var jadwalList = snapshot.data?.docs
-                          .map((doc) => {'id': doc.id, ...doc.data()})
-                          .toList() ??
-                      [];
+                  if (selectedMatkul != null &&
+                      selectedMatkul!.isNotEmpty &&
+                      presensi['matkul_id'] != selectedMatkul) {
+                    return SizedBox.shrink(); // Skip item
+                  }
 
-                  return ListView.builder(
-                    itemCount: jadwalList.length,
-                    itemBuilder: (context, index) {
-                      var jadwal = jadwalList[index];
+                  if (selectedTanggal != null) {
+                    DateTime? dateTime;
+                    if (presensi['tanggal'] != null) {
+                      dateTime = (presensi['tanggal'] as Timestamp).toDate();
+                    }
 
-                      DateTime? dateTime;
-                      if (jadwal['tanggal'] != null) {
-                        dateTime = (jadwal['tanggal'] as Timestamp).toDate();
-                      }
+                    if (dateTime == null ||
+                        dateTime.isBefore(DateTime(selectedTanggal!.year,
+                            selectedTanggal!.month, selectedTanggal!.day)) ||
+                        dateTime.isAfter(DateTime(
+                            selectedTanggal!.year,
+                            selectedTanggal!.month,
+                            selectedTanggal!.day + 1))) {
+                      return SizedBox.shrink(); // Skip item
+                    }
+                  }
 
-                      return Card(
-                        child: ListTile(
-                          contentPadding: EdgeInsets.all(8.0),
-                          title: Row(
-                            children: [
-                              // Menampilkan gambar wajah dengan tap untuk melihat full screen
-                              jadwal['face_image'] != null
-                                  ? GestureDetector(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                FullScreenImage(
-                                              imageUrl: jadwal['face_image'],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: Image.network(
-                                        jadwal['face_image'],
-                                        width: 50,
-                                        height: 50,
-                                        fit: BoxFit.cover,
+                  DateTime? dateTime;
+                  if (presensi['tanggal'] != null) {
+                    dateTime = (presensi['tanggal'] as Timestamp).toDate();
+                  }
+
+                  return Card(
+                    child: ListTile(
+                      contentPadding: EdgeInsets.all(8.0),
+                      title: Row(
+                        children: [
+                          // Menampilkan gambar wajah dengan tap untuk melihat full screen
+                          presensi['face_image'] != null
+                              ? GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => FullScreenImage(
+                                          imageUrl: presensi['face_image'],
+                                        ),
                                       ),
-                                    )
-                                  : SizedBox(width: 50, height: 50),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Nama: ${jadwal['student_id'] ?? 'N/A'}',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    Text(
-                                      'Tanggal: ${dateTime != null ? DateFormat('d MMMM yyyy').format(dateTime) : 'N/A'}',
-                                    ),
-                                    Text(
-                                      'Jam Presensi: ${dateTime != null ? DateFormat(' HH:mm').format(dateTime) : 'N/A'}',
-                                    ),
-                                    Text(
-                                      'Kelas: ${jadwal['class_id'] ?? 'N/A'}',
-                                    ),
-                                    Text(
-                                      'Mata Kuliah: ${jadwal['matkul_id'] ?? 'N/A'}',
-                                    ),
-                                    Text(
-                                      'Status: ${jadwal['presensi_type'] ?? 'Unknown Type'}',
-                                    ),
-                                  ],
+                                    );
+                                  },
+                                  child: Image.network(
+                                    presensi['face_image'],
+                                    width: 50,
+                                    height: 50,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Container(
+                                  width: 50,
+                                  height: 50,
+                                  color: Colors.grey,
+                                  child:
+                                      Icon(Icons.person, color: Colors.white),
                                 ),
-                              ),
-                            ],
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Nama: ${presensi['student_id'] ?? 'Unknown Dosen'}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  'Kelas: ${presensi['class_id'] ?? 'Unknown Class'}',
+                                ),
+                                Text(
+                                  'Mata Kuliah: ${presensi['matkul_id'] ?? 'Unknown Matkul'}',
+                                ),
+                                Text(
+                                  'Jam Presensi: ${dateTime != null ? DateFormat('HH:mm').format(dateTime) : 'N/A'}',
+                                ),
+                                Text(
+                                  'Status: ${presensi['presensi_type'] ?? 'Unknown Type'}',
+                                ),
+                                if (dateTime != null)
+                                  Text(
+                                    'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}',
+                                  ),
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
+                        ],
+                      ),
+                    ),
                   );
                 },
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class FullScreenImage extends StatelessWidget {
-  final String imageUrl;
-
-  const FullScreenImage({Key? key, required this.imageUrl}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Full Screen Image'),
-      ),
-      body: Center(
-        child: InteractiveViewer(
-          child: Image.network(imageUrl),
         ),
       ),
     );

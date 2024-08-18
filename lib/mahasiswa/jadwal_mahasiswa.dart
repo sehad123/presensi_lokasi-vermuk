@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:presensi_app/mahasiswa/presensi_mahasiswa.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
 import 'package:presensi_app/menu_page.dart'; // Import paket intl
 
 class JadwalMahasiswastis extends StatefulWidget {
@@ -28,9 +30,18 @@ class _JadwalMahasiswastisState extends State<JadwalMahasiswastis> {
   @override
   void initState() {
     super.initState();
-    currentClassId = widget.userData['class_id'];
-    currentSemesterId = widget.userData['semester_id'];
-    _fetchHari();
+    initializeDateFormatting('id_ID', null).then((_) {
+      // Setelah inisialisasi selesai, lanjutkan dengan pengaturan hari saat ini
+      currentClassId = widget.userData['class_id'];
+      currentSemesterId = widget.userData['semester_id'];
+
+      String currentDay = DateFormat('EEEE', 'id_ID').format(DateTime.now());
+      // String currentDay = DateFormat('EEEE', 'id_ID')
+      //     .format(DateTime.now().add(Duration(days: 1)));
+      selectedHari = currentDay;
+
+      _fetchHari();
+    });
   }
 
   Future<void> _fetchHari() async {

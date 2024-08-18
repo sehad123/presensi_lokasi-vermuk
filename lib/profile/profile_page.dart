@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePage extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -21,6 +22,22 @@ class _ProfilePageState extends State<ProfilePage> {
       // Contoh: update userData jika perlu
       // widget.userData = fetchNewUserData();
     });
+  }
+
+  Future<void> _logout() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+
+      // Clear shared preferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.remove('user_id');
+      await prefs.remove('login_timestamp');
+
+      // Navigate to login page
+      Navigator.of(context).pushReplacementNamed('/login');
+    } catch (e) {
+      print("Error logging out: $e");
+    }
   }
 
   @override
@@ -79,18 +96,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 buildInfoRow('Kelas', widget.userData['class_id']),
               if (widget.userData['semester_id'] != null)
                 buildInfoRow('Semester', widget.userData['semester_id']),
-              SizedBox(height: 1),
+              SizedBox(height: 20),
               // Tombol Logout
               ElevatedButton(
-                onPressed: () async {
-                  try {
-                    await FirebaseAuth.instance.signOut();
-                    Navigator.of(context).pushReplacementNamed(
-                        '/login'); // Adjust route as needed
-                  } catch (e) {
-                    print("Error logging out: $e");
-                  }
-                },
+                onPressed: _logout,
                 child: Text('Logout'),
               ),
             ],
