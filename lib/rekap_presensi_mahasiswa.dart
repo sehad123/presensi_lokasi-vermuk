@@ -90,7 +90,7 @@ class _RekapPresensiMahasiswaFilteredState
           .where((data) =>
               data['student_id'] != null &&
               data['student_id'] !=
-                  'Unknown Mahasiswa') // Hanya tampilkan jika Mahasiswa_id valid
+                  'Unknown Mahasiswa') // Hanya tampilkan jika dosen_id valid
           .toList();
     });
   }
@@ -214,6 +214,7 @@ class _RekapPresensiMahasiswaFilteredState
             ),
             SizedBox(height: 16),
             // Daftar Presensi
+
             DropdownButtonFormField<String>(
               decoration: InputDecoration(
                 labelText: 'Mata Kuliah',
@@ -284,14 +285,12 @@ class _RekapPresensiMahasiswaFilteredState
                   }
 
                   return Card(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Menampilkan gambar wajah dengan margin atas
-                        SizedBox(height: 16), // Margin atas
-                        Container(
-                          alignment: Alignment.center,
-                          child: presensi['face_image'] != null
+                    child: ListTile(
+                      contentPadding: EdgeInsets.all(8.0),
+                      title: Row(
+                        children: [
+                          // Menampilkan gambar wajah dengan tap untuk melihat full screen
+                          presensi['face_image'] != null
                               ? GestureDetector(
                                   onTap: () {
                                     Navigator.push(
@@ -305,53 +304,50 @@ class _RekapPresensiMahasiswaFilteredState
                                   },
                                   child: Image.network(
                                     presensi['face_image'],
-                                    width: 100,
-                                    height: 100,
+                                    width: 50,
+                                    height: 50,
                                     fit: BoxFit.cover,
                                   ),
                                 )
                               : Container(
-                                  width: 100,
-                                  height: 100,
+                                  width: 50,
+                                  height: 50,
                                   color: Colors.grey,
                                   child:
                                       Icon(Icons.person, color: Colors.white),
                                 ),
-                        ),
-                        SizedBox(height: 8),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Nama: ${presensi['student_id'] ?? 'Unknown Mahasiswa'}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                'Kelas: ${presensi['class_id'] ?? 'Unknown Class'}',
-                              ),
-                              Text(
-                                'Mata Kuliah: ${presensi['matkul_id'] ?? 'Unknown Matkul'}',
-                              ),
-                              Text(
-                                'Jam Presensi: ${dateTime != null ? DateFormat('HH:mm').format(dateTime) : 'N/A'}',
-                              ),
-                              Text(
-                                  'Lokasi : ${presensi['location'] ?? 'Lokasi Tidak Terdeteksi'}'),
-                              Text(
-                                'Status: ${presensi['presensi_type'] ?? 'Unknown Type'}',
-                              ),
-                              if (dateTime != null)
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                                 Text(
-                                  'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}',
+                                  'Nama: ${presensi['student_id'] ?? 'Unknown Mahasiswa'}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                            ],
+                                Text(
+                                  'Kelas: ${presensi['class_id'] ?? 'Unknown Class'}',
+                                ),
+                                Text(
+                                  'Mata Kuliah: ${presensi['matkul_id'] ?? 'Unknown Matkul'}',
+                                ),
+                                Text(
+                                  'Jam Presensi: ${dateTime != null ? DateFormat('HH:mm').format(dateTime) : 'N/A'}',
+                                ),
+                                Text(
+                                  'Status: ${presensi['presensi_type'] ?? 'Unknown Type'}',
+                                ),
+                                if (dateTime != null)
+                                  Text(
+                                    'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}',
+                                  ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },

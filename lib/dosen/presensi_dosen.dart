@@ -211,7 +211,7 @@ class _PresensiDosenState extends State<PresensiDosen> {
 
     if (image != null) {
       final faceImageUrl = await _uploadFaceImage(File(image.path));
-      _handleAttendance('hadir', faceImageUrl);
+      _handleAttendance('Tepat Waktu', faceImageUrl);
     } else {
       Fluttertoast.showToast(msg: 'Gambar tidak diambil.');
     }

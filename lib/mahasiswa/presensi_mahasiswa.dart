@@ -207,10 +207,9 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
 
   Future<void> _takePicture() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-
-    if (image != null) {
+    if (image != null && image.path == "Null") {
       final faceImageUrl = await _uploadFaceImage(File(image.path));
-      _handleAttendance('hadir', faceImageUrl);
+      _handleAttendance('Tepat Waktu', faceImageUrl);
     } else {
       Fluttertoast.showToast(msg: 'Gambar tidak diambil.');
     }
@@ -392,6 +391,8 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
         isSameDay(now, dateTime) &&
         now.isAfter(endTime) &&
         !_hasCheckedIn) {
+      // _handleAttendance("TIdak Hadir", "Null");
+
       Fluttertoast.showToast(
           msg: 'Anda Lupa melakukan presensi, Silahkan Lapor Ke BAAK.');
     }

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'detail_presensi_mahasiswa.dart'; // Import halaman baru
 
 class RekapPresensiMahasiswa extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -16,11 +17,7 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   DateTime selectedDate = DateTime.now(); // Set default to today's date
-  String? selectedTahun;
   bool showAllPresensi = false; // Flag to toggle between filtered and all data
-
-  List<String> tahunList =
-      List.generate(4, (index) => (DateTime.now().year - 3 + index).toString());
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _getJadwalStream() {
     Query<Map<String, dynamic>> query = _firestore
@@ -38,22 +35,12 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
           .where('tanggal', isLessThan: Timestamp.fromDate(endDate));
     }
 
-    if (selectedTahun != null && !showAllPresensi) {
-      var startDate = DateTime(int.parse(selectedTahun!), 1, 1);
-      var endDate = DateTime(int.parse(selectedTahun!) + 1, 1, 1);
-      query = query
-          .where('tanggal',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-          .where('tanggal', isLessThan: Timestamp.fromDate(endDate));
-    }
-
     return query.snapshots();
   }
 
   void resetFilters() {
     setState(() {
       selectedDate = DateTime.now();
-      selectedTahun = null;
       showAllPresensi = false;
     });
   }
@@ -148,75 +135,72 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
                       }
 
                       return Card(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(height: 20),
-                            Container(
-                              alignment: Alignment.center,
-                              child: jadwal['face_image'] != null
-                                  ? GestureDetector(
-                                      onTap: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return Dialog(
-                                              child: Container(
-                                                color: Colors.black,
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.pop(context);
-                                                  },
-                                                  child: Image.network(
-                                                    jadwal['face_image'],
-                                                    fit: BoxFit.contain,
-                                                  ),
-                                                ),
+                        child: ListTile(
+                          contentPadding: EdgeInsets.all(8.0),
+                          leading: jadwal['face_image'] != null
+                              ? GestureDetector(
+                                  onTap: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return Dialog(
+                                          child: Container(
+                                            color: Colors.black,
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                Navigator.pop(context);
+                                              },
+                                              child: Image.network(
+                                                jadwal['face_image'],
+                                                fit: BoxFit.contain,
                                               ),
-                                            );
-                                          },
+                                            ),
+                                          ),
                                         );
                                       },
-                                      child: Image.network(
-                                        jadwal['face_image'],
-                                        width: 150,
-                                        height: 150,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    )
-                                  : Icon(Icons.person, size: 100),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(20.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                      '${jadwal['student_id'] ?? 'Unknown Student'}',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      )),
-                                  SizedBox(height: 4),
-                                  Text(
-                                      'Kelas: ${jadwal['class_id'] ?? 'Unknown Class'}'),
-                                  Text(
-                                      'Mata Kuliah: ${jadwal['matkul_id'] ?? 'Unknown Matkul'}'),
-                                  Text(
-                                      'Dosen: ${jadwal['dosen'] ?? 'Unknown Dosen'}'),
-                                  Text(
-                                      'Status: ${jadwal['presensi_type'] ?? 'Unknown Type'}'),
-                                  Text(
-                                    'Jam Presensi: ${dateTime != null ? DateFormat(' HH:mm').format(dateTime) : 'N/A'}',
+                                    );
+                                  },
+                                  child: Image.network(
+                                    jadwal['face_image'],
+                                    width: 50,
+                                    height: 50,
+                                    fit: BoxFit.cover,
                                   ),
-                                  Text(
-                                      'Lokasi : ${jadwal['location'] ?? 'Lokasi Tidak Terdeteksi'}'),
-                                  if (dateTime != null)
-                                    Text(
-                                        'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}'),
-                                ],
-                              ),
+                                )
+                              : Icon(Icons.person, size: 50),
+                          title: Text(
+                            '${jadwal['matkul_id'] ?? 'Unknown Student'}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
                             ),
-                          ],
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                  'Kelas: ${jadwal['class_id'] ?? 'Unknown Class'}'),
+                              Text(
+                                  'Dosen: ${jadwal['dosen'] ?? 'Unknown Dosen'}'),
+                              Text(
+                                  'Status: ${jadwal['presensi_type'] ?? 'Unknown Type'}'),
+                              Text(
+                                'Jam Presensi: ${dateTime != null ? DateFormat(' HH:mm').format(dateTime) : 'N/A'}',
+                              ),
+                              if (dateTime != null)
+                                Text(
+                                    'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}'),
+                            ],
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => DetailPresensiMahasiswa(
+                                  attendanceData: jadwal,
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       );
                     },
