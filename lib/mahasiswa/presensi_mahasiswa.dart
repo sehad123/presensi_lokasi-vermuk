@@ -267,6 +267,12 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
       _isLoading = true; // Set loading true sebelum memulai proses
     });
     try {
+      // Ambil alamat dari latitude dan longitude
+      String address = _currentPosition != null
+          ? await _getAddressFromLatLng(
+              _currentPosition!.latitude, _currentPosition!.longitude)
+          : 'Tidak diketahui';
+
       QuerySnapshot presensiSnapshot = await FirebaseFirestore.instance
           .collection('presensi')
           .where('class_id', isEqualTo: widget.jadwalData['class_id'])
@@ -319,9 +325,7 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
         'hari_id': widget.jadwalData['hari_id'],
         'latitude': _currentPosition?.latitude,
         'longitude': _currentPosition?.longitude,
-        'location': _currentPosition != null
-            ? GeoPoint(_currentPosition!.latitude, _currentPosition!.longitude)
-            : null,
+        'location': address, // Tambahkan alamat hasil geocoding
         'face_image': faceImageUrl,
       };
 
@@ -384,6 +388,13 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
         isSameDay(now, dateTime) &&
         now.isAfter(startTime) &&
         now.isBefore(endTime);
+    if (dateTime != null &&
+        isSameDay(now, dateTime) &&
+        now.isAfter(endTime) &&
+        !_hasCheckedIn) {
+      Fluttertoast.showToast(
+          msg: 'Anda Lupa melakukan presensi, Silahkan Lapor Ke BAAK.');
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -507,7 +518,7 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
                                   )
                           else if (!isInTimeRange)
                             const Text(
-                              'Presensi hanya bisa dilakukan jika sudah memasuki waktu kelas',
+                              'Presensi hanya bisa dilakukan ketika memasuki jam pelajaran',
                               style: TextStyle(color: Colors.red),
                             )
                           else

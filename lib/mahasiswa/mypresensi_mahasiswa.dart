@@ -113,23 +113,6 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
                   ),
                 ),
                 SizedBox(width: 16),
-                Expanded(
-                  child: DropdownButton<String>(
-                    value: selectedTahun,
-                    onChanged: (value) {
-                      setState(() {
-                        selectedTahun = value;
-                      });
-                    },
-                    items: tahunList
-                        .map((tahun) => DropdownMenuItem<String>(
-                              value: tahun,
-                              child: Text(tahun),
-                            ))
-                        .toList(),
-                    hint: Text('Tahun'),
-                  ),
-                ),
               ],
             ),
             SizedBox(height: 16),
@@ -165,64 +148,75 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
                       }
 
                       return Card(
-                        child: ListTile(
-                          contentPadding: EdgeInsets.all(8.0),
-                          leading: jadwal['face_image'] != null
-                              ? GestureDetector(
-                                  onTap: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return Dialog(
-                                          child: Container(
-                                            color: Colors.black,
-                                            child: GestureDetector(
-                                              onTap: () {
-                                                Navigator.pop(context);
-                                              },
-                                              child: Image.network(
-                                                jadwal['face_image'],
-                                                fit: BoxFit.contain,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 20),
+                            Container(
+                              alignment: Alignment.center,
+                              child: jadwal['face_image'] != null
+                                  ? GestureDetector(
+                                      onTap: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return Dialog(
+                                              child: Container(
+                                                color: Colors.black,
+                                                child: GestureDetector(
+                                                  onTap: () {
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: Image.network(
+                                                    jadwal['face_image'],
+                                                    fit: BoxFit.contain,
+                                                  ),
+                                                ),
                                               ),
-                                            ),
-                                          ),
+                                            );
+                                          },
                                         );
                                       },
-                                    );
-                                  },
-                                  child: Image.network(
-                                    jadwal['face_image'],
-                                    width: 50,
-                                    height: 50,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : Icon(Icons.person, size: 50),
-                          title: Text(
-                            '${jadwal['student_id'] ?? 'Unknown Student'}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
+                                      child: Image.network(
+                                        jadwal['face_image'],
+                                        width: 150,
+                                        height: 150,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : Icon(Icons.person, size: 100),
                             ),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                  'Kelas: ${jadwal['class_id'] ?? 'Unknown Class'}'),
-                              Text(
-                                  'Mata Kuliah: ${jadwal['matkul_id'] ?? 'Unknown Matkul'}'),
-                              Text(
-                                  'Dosen: ${jadwal['dosen'] ?? 'Unknown Dosen'}'),
-                              Text(
-                                  'Status: ${jadwal['presensi_type'] ?? 'Unknown Type'}'),
-                              Text(
-                                'Jam Presensi: ${dateTime != null ? DateFormat(' HH:mm').format(dateTime) : 'N/A'}',
+                            Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                      '${jadwal['student_id'] ?? 'Unknown Student'}',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      )),
+                                  SizedBox(height: 4),
+                                  Text(
+                                      'Kelas: ${jadwal['class_id'] ?? 'Unknown Class'}'),
+                                  Text(
+                                      'Mata Kuliah: ${jadwal['matkul_id'] ?? 'Unknown Matkul'}'),
+                                  Text(
+                                      'Dosen: ${jadwal['dosen'] ?? 'Unknown Dosen'}'),
+                                  Text(
+                                      'Status: ${jadwal['presensi_type'] ?? 'Unknown Type'}'),
+                                  Text(
+                                    'Jam Presensi: ${dateTime != null ? DateFormat(' HH:mm').format(dateTime) : 'N/A'}',
+                                  ),
+                                  Text(
+                                      'Lokasi : ${jadwal['location'] ?? 'Lokasi Tidak Terdeteksi'}'),
+                                  if (dateTime != null)
+                                    Text(
+                                        'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}'),
+                                ],
                               ),
-                              if (dateTime != null)
-                                Text(
-                                    'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}'),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       );
                     },

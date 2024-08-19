@@ -214,7 +214,6 @@ class _RekapPresensiDosenFilteredState
             ),
             SizedBox(height: 16),
             // Daftar Presensi
-
             DropdownButtonFormField<String>(
               decoration: InputDecoration(
                 labelText: 'Mata Kuliah',
@@ -285,12 +284,14 @@ class _RekapPresensiDosenFilteredState
                   }
 
                   return Card(
-                    child: ListTile(
-                      contentPadding: EdgeInsets.all(8.0),
-                      title: Row(
-                        children: [
-                          // Menampilkan gambar wajah dengan tap untuk melihat full screen
-                          presensi['face_image'] != null
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Menampilkan gambar wajah dengan margin atas
+                        SizedBox(height: 16), // Margin atas
+                        Container(
+                          alignment: Alignment.center,
+                          child: presensi['face_image'] != null
                               ? GestureDetector(
                                   onTap: () {
                                     Navigator.push(
@@ -304,50 +305,53 @@ class _RekapPresensiDosenFilteredState
                                   },
                                   child: Image.network(
                                     presensi['face_image'],
-                                    width: 50,
-                                    height: 50,
+                                    width: 100,
+                                    height: 100,
                                     fit: BoxFit.cover,
                                   ),
                                 )
                               : Container(
-                                  width: 50,
-                                  height: 50,
+                                  width: 100,
+                                  height: 100,
                                   color: Colors.grey,
                                   child:
                                       Icon(Icons.person, color: Colors.white),
                                 ),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Nama: ${presensi['dosen_id'] ?? 'Unknown Dosen'}',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                        ),
+                        SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Nama: ${presensi['dosen_id'] ?? 'Unknown Dosen'}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
                                 ),
+                              ),
+                              Text(
+                                'Kelas: ${presensi['class_id'] ?? 'Unknown Class'}',
+                              ),
+                              Text(
+                                'Mata Kuliah: ${presensi['matkul_id'] ?? 'Unknown Matkul'}',
+                              ),
+                              Text(
+                                'Jam Presensi: ${dateTime != null ? DateFormat('HH:mm').format(dateTime) : 'N/A'}',
+                              ),
+                              Text(
+                                  'Lokasi : ${presensi['location'] ?? 'Lokasi Tidak Terdeteksi'}'),
+                              Text(
+                                'Status: ${presensi['presensi_type'] ?? 'Unknown Type'}',
+                              ),
+                              if (dateTime != null)
                                 Text(
-                                  'Kelas: ${presensi['class_id'] ?? 'Unknown Class'}',
+                                  'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}',
                                 ),
-                                Text(
-                                  'Mata Kuliah: ${presensi['matkul_id'] ?? 'Unknown Matkul'}',
-                                ),
-                                Text(
-                                  'Jam Presensi: ${dateTime != null ? DateFormat('HH:mm').format(dateTime) : 'N/A'}',
-                                ),
-                                Text(
-                                  'Status: ${presensi['presensi_type'] ?? 'Unknown Type'}',
-                                ),
-                                if (dateTime != null)
-                                  Text(
-                                    'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}',
-                                  ),
-                              ],
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   );
                 },

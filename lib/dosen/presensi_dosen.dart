@@ -263,6 +263,11 @@ class _PresensiDosenState extends State<PresensiDosen> {
       _isLoading = true; // Set loading true sebelum memulai proses
     });
     try {
+      String address = _currentPosition != null
+          ? await _getAddressFromLatLng(
+              _currentPosition!.latitude, _currentPosition!.longitude)
+          : 'Tidak diketahui';
+
       QuerySnapshot presensiSnapshot = await FirebaseFirestore.instance
           .collection('presensi')
           .where('class_id', isEqualTo: widget.jadwalData['class_id'])
@@ -315,9 +320,7 @@ class _PresensiDosenState extends State<PresensiDosen> {
         'hari_id': widget.jadwalData['hari_id'],
         'latitude': _currentPosition?.latitude,
         'longitude': _currentPosition?.longitude,
-        'location': _currentPosition != null
-            ? GeoPoint(_currentPosition!.latitude, _currentPosition!.longitude)
-            : null,
+        'location': address,
         'face_image': faceImageUrl,
       };
 
@@ -380,6 +383,14 @@ class _PresensiDosenState extends State<PresensiDosen> {
         now.isBefore(endTime);
 
     // bool canCheckIn = now.isAfter(startTime) && now.isBefore(endTime);
+
+    if (dateTime != null &&
+        isSameDay(now, dateTime) &&
+        now.isAfter(endTime) &&
+        !_hasCheckedIn) {
+      Fluttertoast.showToast(
+          msg: 'Anda Lupa melakukan presensi, Silahkan Lapor Ke BAAK.');
+    }
 
     return Scaffold(
       appBar: AppBar(
