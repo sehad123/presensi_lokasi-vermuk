@@ -4,12 +4,15 @@ import 'package:intl/intl.dart'; // Import paket intl
 import 'package:presensi_app/edit_jadwal.dart';
 import 'package:presensi_app/jadwal.dart';
 
-class ListJadwal extends StatefulWidget {
+class ListJadwalDosen extends StatefulWidget {
+  final Map<String, dynamic> userData;
+
+  const ListJadwalDosen({Key? key, required this.userData}) : super(key: key);
   @override
-  _ListJadwalState createState() => _ListJadwalState();
+  _ListJadwalDosenState createState() => _ListJadwalDosenState();
 }
 
-class _ListJadwalState extends State<ListJadwal> {
+class _ListJadwalDosenState extends State<ListJadwalDosen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   String? selectedHari;
@@ -99,6 +102,7 @@ class _ListJadwalState extends State<ListJadwal> {
     if (selectedMatkul != null) {
       query = query.where('matkul_id', isEqualTo: selectedMatkul);
     }
+    query = query.where('dosen_id', isEqualTo: widget.userData['nama']);
 
     return query.snapshots();
   }

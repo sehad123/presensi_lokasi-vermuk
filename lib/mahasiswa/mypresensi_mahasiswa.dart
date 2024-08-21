@@ -130,15 +130,21 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
                       var jadwal = jadwalList[index];
 
                       DateTime? dateTime;
-                      if (jadwal['tanggal'] != null) {
-                        dateTime = (jadwal['tanggal'] as Timestamp).toDate();
+                      if (jadwal['created_at'] != null) {
+                        dateTime = (jadwal['created_at'] as Timestamp).toDate();
                       }
+
+                      // Determine the face_image URL
+                      String? faceImageUrl = jadwal['face_image'];
+                      bool isFaceImageNull = faceImageUrl == null ||
+                          faceImageUrl.toLowerCase() == "null";
 
                       return Card(
                         child: ListTile(
                           contentPadding: EdgeInsets.all(8.0),
-                          leading: jadwal['face_image'] != null
-                              ? GestureDetector(
+                          leading: isFaceImageNull
+                              ? Icon(Icons.person, size: 50)
+                              : GestureDetector(
                                   onTap: () {
                                     showDialog(
                                       context: context,
@@ -151,7 +157,7 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
                                                 Navigator.pop(context);
                                               },
                                               child: Image.network(
-                                                jadwal['face_image'],
+                                                faceImageUrl!,
                                                 fit: BoxFit.contain,
                                               ),
                                             ),
@@ -161,13 +167,12 @@ class _RekapPresensiMahasiswaState extends State<RekapPresensiMahasiswa> {
                                     );
                                   },
                                   child: Image.network(
-                                    jadwal['face_image'],
+                                    faceImageUrl!,
                                     width: 50,
                                     height: 50,
                                     fit: BoxFit.cover,
                                   ),
-                                )
-                              : Icon(Icons.person, size: 50),
+                                ),
                           title: Text(
                             '${jadwal['matkul_id'] ?? 'Unknown Student'}',
                             style: TextStyle(

@@ -10,7 +10,12 @@ class DetailPresensiMahasiswa extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    DateTime dateTime = (attendanceData['tanggal'] as Timestamp).toDate();
+    DateTime dateTime = (attendanceData['created_at'] as Timestamp).toDate();
+
+    // Determine the face_image URL
+    String? faceImageUrl = attendanceData['face_image'];
+    bool isFaceImageNull =
+        faceImageUrl == null || faceImageUrl.toLowerCase() == "null";
 
     return Scaffold(
       appBar: AppBar(
@@ -22,19 +27,16 @@ class DetailPresensiMahasiswa extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Gambar face_image ditampilkan di atas
-            if (attendanceData['face_image'] != null)
-              Center(
-                child: Image.network(
-                  attendanceData['face_image'],
-                  width: 200,
-                  height: 200,
-                  fit: BoxFit.cover,
-                ),
-              )
-            else
-              Center(
-                child: Icon(Icons.person, size: 200),
-              ),
+            Center(
+              child: isFaceImageNull
+                  ? Icon(Icons.person, size: 200)
+                  : Image.network(
+                      faceImageUrl!,
+                      width: 200,
+                      height: 200,
+                      fit: BoxFit.cover,
+                    ),
+            ),
             SizedBox(height: 20),
 
             // Informasi lainnya ditampilkan di bawah gambar
@@ -47,8 +49,6 @@ class DetailPresensiMahasiswa extends StatelessWidget {
               'Kelas: ${attendanceData['class_id'] ?? 'Unknown'}',
               style: TextStyle(fontSize: 16),
             ),
-            SizedBox(height: 8),
-
             SizedBox(height: 8),
             Text(
               'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}',

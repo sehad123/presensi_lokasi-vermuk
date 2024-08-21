@@ -153,7 +153,8 @@ class _JadwalMahasiswastisState extends State<JadwalMahasiswastis> {
                               Text(
                                   'Dosen: ${jadwal['dosen_id'] ?? 'Unknown Dosen'}'),
                               Text(
-                                  'Jam: ${jadwal['jam_mulai']}:${jadwal['menit_mulai']} - ${jadwal['jam_akhir']}:${jadwal['menit_akhir']}'),
+                                'Jam: ${jadwal['jam_mulai']}:${jadwal['menit_mulai'] < 10 ? '0${jadwal['menit_mulai']}' : jadwal['menit_mulai']} - ${jadwal['jam_akhir']}:${jadwal['menit_akhir'] < 10 ? '0${jadwal['menit_akhir']}' : jadwal['menit_akhir']}',
+                              ),
                               Text(
                                   'Status: ${jadwal['status'] ?? 'Unknown Status'}'),
                               if (jadwal['status'] == 'Offline' &&

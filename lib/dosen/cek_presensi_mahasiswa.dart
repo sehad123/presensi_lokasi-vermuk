@@ -1,22 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:presensi_app/Dosen/detail_presensi_Dosen.dart';
+import 'package:presensi_app/mahasiswa/detail_presensi_mahasiswa.dart';
 import 'package:presensi_app/profile/profile_page.dart';
 
-class RekapPresensiDosenFiltered extends StatefulWidget {
-  const RekapPresensiDosenFiltered({Key? key}) : super(key: key);
+class CekPresensiMahasiswa extends StatefulWidget {
+  final Map<String, dynamic> userData;
 
+  const CekPresensiMahasiswa({Key? key, required this.userData})
+      : super(key: key);
   @override
-  _RekapPresensiDosenFilteredState createState() =>
-      _RekapPresensiDosenFilteredState();
+  _CekPresensiMahasiswaState createState() => _CekPresensiMahasiswaState();
 }
 
-class _RekapPresensiDosenFilteredState
-    extends State<RekapPresensiDosenFiltered> {
+class _CekPresensiMahasiswaState extends State<CekPresensiMahasiswa> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  DateTime? selectedTanggal;
+  DateTime selectedDate = DateTime.now(); // Set default to today's date
   String? selectedMatkul;
   String? selectedStudent;
   String? selectedClass;
@@ -26,6 +26,8 @@ class _RekapPresensiDosenFilteredState
   List<String> kelasList = [];
   List<String> matkulList = [];
   List<Map<String, dynamic>> presensiList = [];
+  int totalMahasiswa = 0;
+  int totalDisplayedMahasiswa = 0;
 
   @override
   void initState() {
@@ -84,29 +86,60 @@ class _RekapPresensiDosenFilteredState
   }
 
   Future<void> fetchPresensiList() async {
-    var snapshot = await _firestore.collection('presensi').get();
+    DateTime startOfDay =
+        DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+    DateTime endOfDay = startOfDay.add(Duration(days: 1));
+    var snapshot = await _firestore
+        .collection('presensi')
+        .where('dosen', isEqualTo: widget.userData['nama'])
+        .where('matkul_id', isEqualTo: selectedMatkul)
+        .where('tanggal', isGreaterThanOrEqualTo: startOfDay)
+        .where('tanggal', isLessThan: endOfDay)
+        // .where('tanggal', isEqualTo: selectedDate)
+        .get();
+
     setState(() {
       presensiList = snapshot.docs
           .map((doc) => {'id': doc.id, ...doc.data()})
           .where((data) =>
-              data['dosen_id'] != null &&
-              data['dosen_id'] !=
-                  'Unknown Dosen') // Hanya tampilkan jika dosen_id valid
+              data['student_id'] != null &&
+              data['student_id'] != 'Unknown Mahasiswa')
           .toList();
+
+      // Hitung jumlah mahasiswa yang tampil berdasarkan filter
+      totalDisplayedMahasiswa = presensiList.length;
+    });
+
+    if (selectedClass != null && selectedSemester != null) {
+      fetchTotalMahasiswa();
+    }
+  }
+
+  Future<void> fetchTotalMahasiswa() async {
+    var snapshot = await _firestore
+        .collection('users')
+        .where('user_type', isEqualTo: 3)
+        .where('class_id', isEqualTo: selectedClass)
+        .where('semester_id', isEqualTo: selectedSemester)
+        .get();
+
+    setState(() {
+      totalMahasiswa = snapshot.docs.length;
     });
   }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: selectedTanggal ?? DateTime.now(),
+      initialDate: selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
     );
-    if (picked != null && picked != selectedTanggal)
+    if (picked != null && picked != selectedDate) {
       setState(() {
-        selectedTanggal = picked;
+        selectedDate = picked;
       });
+    }
   }
 
   @override
@@ -117,8 +150,21 @@ class _RekapPresensiDosenFilteredState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Menambahkan angka di pojok kanan atas
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  '$totalDisplayedMahasiswa / $totalMahasiswa',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
             // Filter Mata Kuliah
-            // Row for filters
             Row(
               children: [
                 Expanded(
@@ -162,7 +208,6 @@ class _RekapPresensiDosenFilteredState
               ],
             ),
             SizedBox(height: 16),
-            // Row for filters
             Row(
               children: [
                 Expanded(
@@ -183,39 +228,29 @@ class _RekapPresensiDosenFilteredState
                         selectedClass = value;
                         fetchMatkulList(value!);
                         selectedMatkul = null;
+                        fetchTotalMahasiswa();
                       });
                     },
                   ),
                 ),
                 SizedBox(width: 16),
                 Expanded(
-                  child: InkWell(
-                    onTap: () => _selectDate(context),
-                    child: InputDecorator(
-                      decoration: InputDecoration(
-                        labelText: 'Tanggal',
-                        border: OutlineInputBorder(),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            selectedTanggal != null
-                                ? DateFormat('d MMMM yyyy')
-                                    .format(selectedTanggal!)
-                                : 'Pilih Tanggal',
-                          ),
-                          Spacer(),
-                          Icon(Icons.calendar_today, size: 20),
-                        ],
+                  child: TextField(
+                    controller: TextEditingController(
+                        text: DateFormat('dd/MM/yyyy').format(selectedDate)),
+                    decoration: InputDecoration(
+                      labelText: 'Tanggal',
+                      suffixIcon: IconButton(
+                        icon: Icon(Icons.calendar_today),
+                        onPressed: () => _selectDate(context),
                       ),
                     ),
+                    readOnly: true,
                   ),
                 ),
               ],
             ),
             SizedBox(height: 16),
-            // Daftar Presensi
-
             DropdownButtonFormField<String>(
               decoration: InputDecoration(
                 labelText: 'Mata Kuliah',
@@ -235,7 +270,6 @@ class _RekapPresensiDosenFilteredState
               },
             ),
             SizedBox(height: 16),
-
             Expanded(
               child: ListView.builder(
                 itemCount: presensiList.length,
@@ -244,39 +278,37 @@ class _RekapPresensiDosenFilteredState
 
                   if (selectedStudent != null &&
                       selectedStudent!.isNotEmpty &&
-                      !presensi['dosen_id']
+                      !presensi['student_id']
                           .toString()
                           .toLowerCase()
                           .contains(selectedStudent!.toLowerCase())) {
-                    return SizedBox.shrink(); // Skip item
+                    return SizedBox.shrink();
                   }
 
                   if (selectedClass != null &&
                       selectedClass!.isNotEmpty &&
                       presensi['class_id'] != selectedClass) {
-                    return SizedBox.shrink(); // Skip item
+                    return SizedBox.shrink();
                   }
 
                   if (selectedMatkul != null &&
                       selectedMatkul!.isNotEmpty &&
                       presensi['matkul_id'] != selectedMatkul) {
-                    return SizedBox.shrink(); // Skip item
+                    return SizedBox.shrink();
                   }
 
-                  if (selectedTanggal != null) {
+                  if (selectedDate != null) {
                     DateTime? dateTime;
                     if (presensi['tanggal'] != null) {
                       dateTime = (presensi['tanggal'] as Timestamp).toDate();
                     }
 
                     if (dateTime == null ||
-                        dateTime.isBefore(DateTime(selectedTanggal!.year,
-                            selectedTanggal!.month, selectedTanggal!.day)) ||
-                        dateTime.isAfter(DateTime(
-                            selectedTanggal!.year,
-                            selectedTanggal!.month,
-                            selectedTanggal!.day + 1))) {
-                      return SizedBox.shrink(); // Skip item
+                        dateTime.isBefore(DateTime(selectedDate.year,
+                            selectedDate.month, selectedDate.day)) ||
+                        dateTime.isAfter(DateTime(selectedDate.year,
+                            selectedDate.month, selectedDate.day + 1))) {
+                      return SizedBox.shrink();
                     }
                   }
 
@@ -284,8 +316,6 @@ class _RekapPresensiDosenFilteredState
                   if (presensi['created_at'] != null) {
                     dateTime = (presensi['created_at'] as Timestamp).toDate();
                   }
-
-                  // Update the ListTile inside the ListView.builder
 
                   return Card(
                     child: ListTile(
@@ -325,7 +355,7 @@ class _RekapPresensiDosenFilteredState
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Nama: ${presensi['dosen_id'] ?? 'Unknown Dosen'}',
+                                  'Nama: ${presensi['student_id'] ?? 'Unknown Mahasiswa'}',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -336,9 +366,9 @@ class _RekapPresensiDosenFilteredState
                                 Text(
                                   'Mata Kuliah: ${presensi['matkul_id'] ?? 'Unknown Matkul'}',
                                 ),
-                                // Text(
-                                //   'Jam Presensi: ${dateTime != null ? DateFormat('HH:mm').format(dateTime) : 'N/A'}',
-                                // ),
+                                Text(
+                                  'Jam Presensi: ${dateTime != null ? DateFormat('HH:mm').format(dateTime) : 'N/A'}',
+                                ),
                                 Text(
                                   'Status: ${presensi['presensi_type'] ?? 'Unknown Type'}',
                                 ),
@@ -355,7 +385,7 @@ class _RekapPresensiDosenFilteredState
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => DetailPresensiDosen(
+                            builder: (context) => DetailPresensiMahasiswa(
                               attendanceData: presensi,
                             ),
                           ),

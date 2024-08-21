@@ -22,6 +22,8 @@
 		<string>????</string>
 		<key>NSCameraUsageDescription</key>
 		<string>We need to access your camera for face verification.</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>We need to access your location for attendance purposes.</string>
 		<key>CFBundleVersion</key>
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
 		<key>LSRequiresIPhoneOS</key>
@@ -47,5 +49,12 @@
 		<true />
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true />
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>fetch</string>
+			<string>remote-notification</string>
+		</array>
+		<key>NSUserNotificationUsageDescription</key>
+		<string>We need to send you notifications to remind you about your classes and attendance.</string>
 	</dict>
 </plist>

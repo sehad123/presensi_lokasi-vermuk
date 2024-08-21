@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:presensi_app/dashboard.dart';
+import 'package:presensi_app/dosen/cek_presensi_mahasiswa.dart';
 import 'package:presensi_app/dosen/jadwal_dosen.dart';
+import 'package:presensi_app/dosen/list_jadwal_dosen.dart';
 import 'package:presensi_app/dosen/mypresensi_dosen.dart';
+import 'package:presensi_app/list_jadwal.dart';
 import 'package:presensi_app/mahasiswa/jadwal_mahasiswa.dart';
 import 'package:presensi_app/mahasiswa/mypresensi_mahasiswa.dart';
 import 'package:presensi_app/menu_page.dart';
@@ -30,6 +33,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _fetchUserData() async {
     try {
+      print("Fetching data for user ID: ${widget.userId}");
       final doc = await FirebaseFirestore.instance
           .collection('users')
           .doc(widget.userId)
@@ -38,11 +42,13 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           _userData = doc.data();
         });
+        print("User data: $_userData");
       } else {
-        print("User data not found.");
+        print("User data not found for ID: ${widget.userId}");
       }
-    } catch (e) {
+    } catch (e, stacktrace) {
       print("Error fetching user data: $e");
+      print("Stacktrace: $stacktrace");
     }
   }
 
@@ -78,8 +84,10 @@ class _HomePageState extends State<HomePage> {
             case 1:
               return RekapPresensiDosen(userData: _userData!);
             case 2:
-              return RekapPresensiMahasiswaFiltered();
+              return CekPresensiMahasiswa(userData: _userData!);
             case 3:
+              return ListJadwalDosen(userData: _userData!);
+            case 4:
               return ProfilePage(userData: _userData!);
             default:
               return Center(child: Text('Page not found'));
@@ -122,16 +130,20 @@ class _HomePageState extends State<HomePage> {
         case 2:
           return [
             BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard),
-              label: 'Jadwal',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.line_style_sharp),
-              label: 'Presensi Saya',
+              icon: Icon(Icons.calendar_today),
+              label: 'Jadwal Kuliah',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.list),
+              label: 'Presensi Saya',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.menu_book),
               label: 'Presensi Mahasiswa',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_month),
+              label: 'Jadwal Saya',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person),
@@ -141,12 +153,12 @@ class _HomePageState extends State<HomePage> {
         default:
           return [
             BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard),
+              icon: Icon(Icons.calendar_month),
               label: 'Jadwal',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.menu),
-              label: 'Kehadiran',
+              icon: Icon(Icons.list),
+              label: 'Presensi',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person),
@@ -162,10 +174,9 @@ class _HomePageState extends State<HomePage> {
         bottomNavigationBar: BottomNavigationBar(
           items: _getBottomNavigationBarItems(),
           currentIndex: _selectedIndex,
-          selectedItemColor: Colors.blue, // Warna ikon yang dipilih
-          unselectedItemColor: Colors.grey, // Warna ikon yang tidak dipilih
-          backgroundColor:
-              Colors.white, // Warna latar belakang BottomNavigationBar
+          selectedItemColor: Colors.blue,
+          unselectedItemColor: Colors.grey,
+          backgroundColor: Colors.white,
           onTap: _onItemTapped,
         ));
   }

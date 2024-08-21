@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:async';
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,6 +14,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:presensi_app/mahasiswa/mypresensi_mahasiswa.dart';
+import 'package:presensi_app/notification_helper.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 
@@ -28,6 +31,11 @@ class PresensiMahasiswa extends StatefulWidget {
 }
 
 class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
+  Timer? _countdownTimer;
+  Duration _countdownDuration = Duration();
+  final NotificationHelper _notificationHelper =
+      NotificationHelper(); // Instance notifikasi
+
   Position? _currentPosition;
   final MapController _mapController = MapController();
   bool _loadingLocation = true;
@@ -47,11 +55,21 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
     _initializeLocation();
     _checkIfCheckedIn(); // Add this to check presensi status when the page loads
     _loadTargetAddress();
+    _requestNotificationPermission(); // Meminta izin notifikasi
+    _initializeCountdown();
+    _scheduleAttendanceNotification(DateTime.now().add(Duration(minutes: 10)));
   }
 
   void _loadTargetAddress() async {
     _targetAddress = await _getTargetAddressFromLatLng();
     setState(() {});
+  }
+
+  void _requestNotificationPermission() async {
+    bool isAllowed = await AwesomeNotifications().isNotificationAllowed();
+    if (!isAllowed) {
+      AwesomeNotifications().requestPermissionToSendNotifications();
+    }
   }
 
   void _initializeLocation() async {
@@ -78,18 +96,27 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
 
   Future<void> _checkIfCheckedIn() async {
     try {
+      // Mengubah tanggal sekarang ke format yang sesuai
+      // String formattedDate = DateFormat('MMMM d, yyyy').format(DateTime.now());
+      final DateTime now = DateTime.now();
+      final DateTime onlyDate = DateTime(now.year, now.month, now.day);
+
       QuerySnapshot presensiSnapshot = await FirebaseFirestore.instance
           .collection('presensi')
           .where('class_id', isEqualTo: widget.jadwalData['class_id'])
           .where('hari_id', isEqualTo: widget.jadwalData['hari_id'])
           .where('matkul_id', isEqualTo: widget.jadwalData['matkul_id'])
-          .where('student_id', isEqualTo: widget.userData['user_id'])
+          .where('student_id', isEqualTo: widget.userData['nama'])
+          .where('tanggal', isEqualTo: onlyDate) // Only compare the date part
           .get();
 
       if (presensiSnapshot.docs.isNotEmpty) {
-        setState(() {
-          _hasCheckedIn = true;
-        });
+        _hasCheckedIn = true;
+        Fluttertoast.showToast(
+            msg: 'Anda sudah melakukan presensi untuk jadwal ini.');
+        setState(() {});
+      } else {
+        _hasCheckedIn = false;
       }
     } catch (e) {
       Fluttertoast.showToast(msg: 'Terjadi kesalahan: $e');
@@ -207,9 +234,9 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
 
   Future<void> _takePicture() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-    if (image != null && image.path == "Null") {
+    if (image != null && image.path != "Null") {
       final faceImageUrl = await _uploadFaceImage(File(image.path));
-      _handleAttendance('Tepat Waktu', faceImageUrl);
+      _handleAttendance('Tepat Waktu', faceImageUrl, 100);
     } else {
       Fluttertoast.showToast(msg: 'Gambar tidak diambil.');
     }
@@ -232,11 +259,17 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
   }
 
   Future<void> _handleAttendance(
-      String presensiType, String faceImageUrl) async {
+      String presensiType, String faceImageUrl, int bobot) async {
+    if (_hasCheckedIn) {
+      Fluttertoast.showToast(
+          msg: 'Anda sudah melakukan presensi untuk jadwal ini.');
+      return;
+    }
+
     // Pengecekan apakah status presensi bukan "Online" dan posisi saat ini null
     if (widget.jadwalData['status'] != 'Online' && _currentPosition == null) {
-      Fluttertoast.showToast(
-          msg: 'Tidak dapat mendeteksi lokasi. Aktifkan GPS.');
+      // Fluttertoast.showToast(
+      //     msg: 'Tidak dapat mendeteksi lokasi. Aktifkan GPS.');
       await _getLocation(); // Meminta pengguna untuk mengaktifkan GPS
       return;
     }
@@ -266,7 +299,12 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
       _isLoading = true; // Set loading true sebelum memulai proses
     });
     try {
-      // Ambil alamat dari latitude dan longitude
+      final DateTime now = DateTime.now();
+
+      final DateTime onlyDate = DateTime(now.year, now.month, now.day);
+
+      // Ambil alam
+      //at dari latitude dan longitude
       String address = _currentPosition != null
           ? await _getAddressFromLatLng(
               _currentPosition!.latitude, _currentPosition!.longitude)
@@ -277,7 +315,10 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
           .where('class_id', isEqualTo: widget.jadwalData['class_id'])
           .where('hari_id', isEqualTo: widget.jadwalData['hari_id'])
           .where('matkul_id', isEqualTo: widget.jadwalData['matkul_id'])
-          .where('student_id', isEqualTo: widget.userData['user_id'])
+          .where('student_id', isEqualTo: widget.userData['nama'])
+          .where('tanggal',
+              isEqualTo: onlyDate) // cek berdasarkan tanggal yang sama
+
           .get();
       if (presensiSnapshot.docs.isNotEmpty) {
         setState(() {
@@ -290,7 +331,6 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
         return;
       }
 
-      DateTime now = DateTime.now();
       int jamMulai =
           int.tryParse(widget.jadwalData['jam_mulai'].toString()) ?? 0;
       int menitMulai =
@@ -301,17 +341,20 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
       Duration difference = now.difference(startTime);
       if (difference.inMinutes > 30) {
         presensiType = 'tidak hadir';
+        bobot = 0;
       } else if (difference.inMinutes > 20) {
         presensiType = 'terlambat B';
+        bobot = 50;
       } else if (difference.inMinutes > 10) {
         presensiType = 'terlambat A';
+        bobot = 75;
       }
 
       final attendanceData = {
         'id': DateTime.now().millisecondsSinceEpoch,
         'class_id': widget.jadwalData['class_id'],
         'dosen': widget.jadwalData['dosen_id'],
-        'tanggal': DateTime.now(),
+        'tanggal': onlyDate,
         'student_id':
             widget.userData['user_type'] == 3 ? widget.userData['nama'] : null,
         'dosen_id':
@@ -326,6 +369,7 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
         'longitude': _currentPosition?.longitude,
         'location': address, // Tambahkan alamat hasil geocoding
         'face_image': faceImageUrl,
+        'bobot': bobot
       };
 
       await FirebaseFirestore.instance
@@ -358,7 +402,85 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
         date1.day == date2.day;
   }
 
-// ... kode lainnya tetap
+  void _initializeCountdown() {
+    DateTime now = DateTime.now();
+    int jamMulai = int.tryParse(widget.jadwalData['jam_mulai'].toString()) ?? 0;
+    int menitMulai =
+        int.tryParse(widget.jadwalData['menit_mulai'].toString()) ?? 0;
+    DateTime startTime =
+        DateTime(now.year, now.month, now.day, jamMulai, menitMulai);
+
+    Duration timeUntilPresensi = startTime.difference(now);
+
+    if (timeUntilPresensi.isNegative) {
+      timeUntilPresensi = Duration.zero;
+    }
+
+    // Hitung waktu hingga countdown berakhir
+    _countdownDuration = timeUntilPresensi;
+
+    // Hanya menjalankan timer jika ada durasi tersisa
+    if (_countdownDuration > Duration.zero) {
+      _startCountdownTimer();
+    }
+
+    // Jadwalkan notifikasi
+    _scheduleAttendanceNotification(startTime);
+  }
+
+  void _scheduleAttendanceNotification(DateTime startTime) async {
+    // Jadwalkan notifikasi 10 menit sebelum pelajaran dimulai
+    DateTime notificationTime = startTime.subtract(Duration(minutes: 10));
+
+    // Pastikan waktu notifikasi lebih besar dari waktu saat ini
+    if (notificationTime.isAfter(DateTime.now())) {
+      await AwesomeNotifications().createNotification(
+        content: NotificationContent(
+          id: 10,
+          channelKey: 'presensi_channel',
+          title: 'Pengingat Presensi',
+          body: 'Pelajaran segera dimulai, lakukan presensi sekarang.',
+          notificationLayout: NotificationLayout.Default,
+        ),
+        schedule: NotificationCalendar.fromDate(date: notificationTime),
+      );
+    }
+  }
+
+  void _startCountdownTimer() {
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (_countdownDuration.inSeconds > 0) {
+        setState(() {
+          _countdownDuration = _countdownDuration - Duration(seconds: 1);
+        });
+
+        if (_countdownDuration.inSeconds == 0) {
+          _notificationHelper.showNotification(
+            'presensi_channel',
+            'Saatnya untuk melakukan presensi untuk jadwal kuliah Anda.',
+          );
+          timer.cancel();
+        }
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+
+  String _formatDuration(Duration duration) {
+    int hours = duration.inHours;
+    int minutes = duration.inMinutes.remainder(60);
+    int seconds = duration.inSeconds.remainder(60);
+
+    return "Pelajaran akan dimulai dalam $hours jam $minutes menit $seconds detik lagi";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -387,14 +509,49 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
         isSameDay(now, dateTime) &&
         now.isAfter(startTime) &&
         now.isBefore(endTime);
-    if (dateTime != null &&
-        isSameDay(now, dateTime) &&
-        now.isAfter(endTime) &&
-        !_hasCheckedIn) {
-      // _handleAttendance("TIdak Hadir", "Null");
 
-      Fluttertoast.showToast(
-          msg: 'Anda Lupa melakukan presensi, Silahkan Lapor Ke BAAK.');
+    Future<void> _deletePreviousAttendance() async {
+      try {
+        final DateTime now = DateTime.now();
+        final DateTime onlyDate = DateTime(now.year, now.month, now.day);
+
+        QuerySnapshot presensiSnapshot = await FirebaseFirestore.instance
+            .collection('presensi')
+            .where('class_id', isEqualTo: widget.jadwalData['class_id'])
+            .where('hari_id', isEqualTo: widget.jadwalData['hari_id'])
+            .where('matkul_id', isEqualTo: widget.jadwalData['matkul_id'])
+            .where('dosen_id', isEqualTo: widget.userData['nama'])
+            .where('tanggal', isEqualTo: onlyDate)
+            .get();
+
+        if (presensiSnapshot.docs.isNotEmpty) {
+          for (var doc in presensiSnapshot.docs) {
+            await FirebaseFirestore.instance
+                .collection('presensi')
+                .doc(doc.id)
+                .delete();
+          }
+        }
+      } catch (e) {
+        Fluttertoast.showToast(msg: 'Gagal menghapus presensi sebelumnya: $e');
+      }
+    }
+
+    if (dateTime != null) {
+      print('dateTime is not null');
+      if (isSameDay(now, dateTime)) {
+        print('Date is the same day');
+        if (now.isAfter(endTime)) {
+          print('Current time is after endTime');
+          if (!_hasCheckedIn) {
+            print('User has not checked in');
+            _handleAttendance("Lupa Presensi", "Null", 0);
+            Fluttertoast.showToast(
+                msg: 'Anda Lupa melakukan presensi, Silahkan Lapor Ke BAAK.');
+            _deletePreviousAttendance();
+          }
+        }
+      }
     }
 
     return Scaffold(
@@ -505,6 +662,18 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
                             Text(
                                 'Tanggal: ${DateFormat('d MMMM yyyy').format(dateTime)}'),
                           SizedBox(height: 10),
+                          if (dateTime != null &&
+                              isSameDay(now, dateTime) &&
+                              now.isBefore(startTime))
+                            Text(
+                              _formatDuration(_countdownDuration),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange,
+                              ),
+                            ),
+                          // Logika yang telah diperbaiki
                           if (!_hasCheckedIn && isInTimeRange)
                             _isLoading
                                 ? Center(child: CircularProgressIndicator())
@@ -517,7 +686,9 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
                                     },
                                     child: const Text('Presensi'),
                                   )
-                          else if (!isInTimeRange)
+                          else if (!_hasCheckedIn &&
+                              !isInTimeRange &&
+                              now.isBefore(startTime))
                             const Text(
                               'Presensi hanya bisa dilakukan ketika memasuki jam pelajaran',
                               style: TextStyle(color: Colors.red),

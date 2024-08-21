@@ -3,8 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:presensi_app/firebase_setup.dart';
 import 'package:presensi_app/home/home_page.dart';
+import 'package:presensi_app/notification_helper.dart';
 import 'package:presensi_app/splash_screen.dart';
 import 'package:presensi_app/login/login_page.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print('Handling a background message: ${message.messageId}');
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +28,42 @@ void main() async {
 
       // Tes koneksi Firestore
       await testFirestoreConnection();
+      // Inisialisasi Firebase Messaging
+      FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+      NotificationHelper notificationHelper = NotificationHelper();
+
+      // Minta izin notifikasi (untuk iOS)
+      NotificationSettings settings = await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        print('User granted permission for notifications');
+      } else if (settings.authorizationStatus ==
+          AuthorizationStatus.provisional) {
+        print('User granted provisional permission for notifications');
+      } else {
+        print('User denied notification permission');
+      }
+
+      FirebaseMessaging.onBackgroundMessage(
+          _firebaseMessagingBackgroundHandler);
+
+      String? token = await messaging.getToken();
+      print('FCM Token: $token');
+
+      // Handler pesan foreground
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        if (message.notification != null) {
+          notificationHelper.showNotification(
+            message.notification!.title ?? 'Presensi',
+            message.notification!.body ?? 'Jangan lupa melakukan presensi!',
+          );
+        }
+      });
     } else {
       print('Failed to initialize Firebase');
     }

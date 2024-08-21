@@ -130,14 +130,15 @@ class _RekapPresensiDosenState extends State<RekapPresensiDosen> {
                       var jadwal = jadwalList[index];
 
                       DateTime? dateTime;
-                      if (jadwal['tanggal'] != null) {
-                        dateTime = (jadwal['tanggal'] as Timestamp).toDate();
+                      if (jadwal['created_at'] != null) {
+                        dateTime = (jadwal['created_at'] as Timestamp).toDate();
                       }
 
                       return Card(
                         child: ListTile(
                           contentPadding: EdgeInsets.all(8.0),
-                          leading: jadwal['face_image'] != null
+                          leading: (jadwal['face_image'] != null &&
+                                  jadwal['face_image'] != "Null")
                               ? GestureDetector(
                                   onTap: () {
                                     showDialog(
