@@ -95,7 +95,7 @@ class _EditPresensiState extends State<EditPresensi> {
             TextField(
               controller:
                   TextEditingController(text: _presensiData['student_id']),
-              decoration: InputDecoration(labelText: 'Student ID'),
+              decoration: InputDecoration(labelText: 'Mahasiswa'),
               readOnly: true, // Make this field read-only
             ),
             SizedBox(height: 16),
@@ -104,12 +104,12 @@ class _EditPresensiState extends State<EditPresensi> {
               spacing: 8.0, // Adjust spacing between options
               runSpacing: 8.0,
               children: [
-                _buildRadioOption('tepat waktu'),
-                _buildRadioOption('terlambat A'),
-                _buildRadioOption('terlambat B'),
-                _buildRadioOption('sakit'),
-                _buildRadioOption('izin'),
-                _buildRadioOption('tidak hadir'),
+                _buildRadioOption('Tepat Waktu'),
+                _buildRadioOption('Terlambat A'),
+                _buildRadioOption('Terlambat B'),
+                _buildRadioOption('Sakit'),
+                _buildRadioOption('Izin'),
+                _buildRadioOption('Tidak hadir'),
               ],
             ),
             SizedBox(height: 16),

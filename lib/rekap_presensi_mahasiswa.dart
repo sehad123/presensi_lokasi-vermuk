@@ -5,6 +5,7 @@ import 'package:presensi_app/edit_jadwal.dart';
 import 'package:presensi_app/edit_presensi.dart';
 import 'package:presensi_app/mahasiswa/detail_presensi_mahasiswa.dart';
 import 'package:presensi_app/profile/profile_page.dart';
+import 'package:presensi_app/tambah_presensi.dart';
 
 class RekapPresensiMahasiswaFiltered extends StatefulWidget {
   @override
@@ -86,6 +87,11 @@ class _RekapPresensiMahasiswaFilteredState
       context,
       MaterialPageRoute(builder: (context) => EditPresensi(docId: docId)),
     ).then((_) => setState(() {})); // Refresh the state after editing
+  }
+
+  void deletePresensi(String docId) async {
+    await _firestore.collection('presensi').doc(docId).delete();
+    // No need to call fetchJadwalList() here
   }
 
   @override
@@ -321,7 +327,6 @@ class _RekapPresensiMahasiswaFilteredState
                                       ),
                               ),
                               SizedBox(width: 16),
-                              // Informasi tambahan di sebelah kanan gambar
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -346,11 +351,20 @@ class _RekapPresensiMahasiswaFilteredState
                                     Text(
                                         'Bobot Kehadiran: ${presensi['bobot'] ?? 'Tidak Diketahui'}'),
                                     SizedBox(height: 8),
-                                    ElevatedButton(
-                                      onPressed: () =>
-                                          editPresensi(presensi['id']),
-                                      child: Text('Edit Presensi'),
-                                    ),
+                                    Row(
+                                      children: [
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              editPresensi(presensi['id']),
+                                          child: Text('Edit'),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              deletePresensi(presensi['id']),
+                                          child: Text('Hapus'),
+                                        ),
+                                      ],
+                                    )
                                   ],
                                 ),
                               ),
@@ -366,6 +380,17 @@ class _RekapPresensiMahasiswaFilteredState
           ],
         ),
       ),
+      // Tambahkan floatingActionButton di sini
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddPresensiMahasiswa()),
+          );
+        },
+        child: Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
@@ -373,12 +398,13 @@ class _RekapPresensiMahasiswaFilteredState
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: selectedTanggal ?? DateTime.now(),
-      firstDate: DateTime(2020),
+      firstDate: DateTime(2000),
       lastDate: DateTime(2101),
     );
-    if (picked != null && picked != selectedTanggal)
+    if (picked != null && picked != selectedTanggal) {
       setState(() {
         selectedTanggal = picked;
       });
+    }
   }
 }

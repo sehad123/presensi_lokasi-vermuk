@@ -12,9 +12,9 @@ class MenuPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Daftar Menu Halaman'),
-      ),
+      // appBar: AppBar(
+      //     // title: Text('Daftar Menu Halaman'),
+      //     ),
       body: ListView(
         children: [
           // Mahasiswa Menu Item
@@ -43,42 +43,38 @@ class MenuPage extends StatelessWidget {
           ),
           Divider(),
 
-          // Akademik Menu with Dropdown
-          ExpansionTile(
-            title: Text('Akademik'),
-            children: [
-              ListTile(
-                title: Text('Semester & Class'),
-                onTap: () {
-                  // Aksi ketika Semester & Class diklik
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => SemesterClassPage()),
-                  );
-                },
-              ),
-              ListTile(
-                title: Text('Matkul & Class'),
-                onTap: () {
-                  // Aksi ketika Matkul & Class diklik
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => MatkulClassPage()),
-                  );
-                },
-              ),
-              ListTile(
-                title: Text('Matkul & Dosen'),
-                onTap: () {
-                  // Aksi ketika Matkul & Dosen diklik
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => MatkulDosenPage()),
-                  );
-                },
-              ),
-            ],
+          // Sub Menu Akademik (Dipindahkan dari ExpansionTile)
+          ListTile(
+            title: Text('Semester & Class'),
+            onTap: () {
+              // Aksi ketika Semester & Class diklik
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SemesterClassPage()),
+              );
+            },
+          ),
+          Divider(),
+          ListTile(
+            title: Text('Matkul & Class'),
+            onTap: () {
+              // Aksi ketika Matkul & Class diklik
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => MatkulClassPage()),
+              );
+            },
+          ),
+          Divider(),
+          ListTile(
+            title: Text('Matkul & Dosen'),
+            onTap: () {
+              // Aksi ketika Matkul & Dosen diklik
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => MatkulDosenPage()),
+              );
+            },
           ),
           Divider(),
 

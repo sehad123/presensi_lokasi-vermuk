@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Import paket intl
 import 'package:presensi_app/edit_jadwal.dart';
-import 'package:presensi_app/jadwal.dart';
+// import 'package:presensi_app/jadwal.dart';
 
 class ListJadwalDosen extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -315,10 +315,10 @@ class _ListJadwalDosenState extends State<ListJadwalDosen> {
                                 icon: Icon(Icons.edit),
                                 onPressed: () => editJadwal(jadwal['id']),
                               ),
-                              IconButton(
-                                icon: Icon(Icons.delete),
-                                onPressed: () => deleteJadwal(jadwal['id']),
-                              ),
+                              // IconButton(
+                              //   icon: Icon(Icons.delete),
+                              //   onPressed: () => deleteJadwal(jadwal['id']),
+                              // ),
                             ],
                           ),
                         ),
@@ -328,17 +328,17 @@ class _ListJadwalDosenState extends State<ListJadwalDosen> {
                 },
               ),
             ),
-            FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => JadwalMahasiswa(),
-                  ),
-                );
-              },
-              child: Icon(Icons.add),
-            ),
+            // FloatingActionButton(
+            //   onPressed: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (context) => JadwalMahasiswa(),
+            //       ),
+            //     );
+            //   },
+            //   child: Icon(Icons.add),
+            // ),
           ],
         ),
       ),

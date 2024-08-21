@@ -340,18 +340,18 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
 
       Duration difference = now.difference(startTime);
       if (difference.inMinutes > 30) {
-        presensiType = 'tidak hadir';
+        presensiType = 'Tidak Hadir';
         bobot = 0;
       } else if (difference.inMinutes > 20) {
-        presensiType = 'terlambat B';
+        presensiType = 'Terlambat B';
         bobot = 50;
       } else if (difference.inMinutes > 10) {
-        presensiType = 'terlambat A';
+        presensiType = 'Terlambat A';
         bobot = 75;
       }
 
       final attendanceData = {
-        'id': DateTime.now().millisecondsSinceEpoch,
+        // 'id': DateTime.now().millisecondsSinceEpoch,
         'class_id': widget.jadwalData['class_id'],
         'dosen': widget.jadwalData['dosen_id'],
         'tanggal': onlyDate,
@@ -510,33 +510,6 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
         now.isAfter(startTime) &&
         now.isBefore(endTime);
 
-    Future<void> _deletePreviousAttendance() async {
-      try {
-        final DateTime now = DateTime.now();
-        final DateTime onlyDate = DateTime(now.year, now.month, now.day);
-
-        QuerySnapshot presensiSnapshot = await FirebaseFirestore.instance
-            .collection('presensi')
-            .where('class_id', isEqualTo: widget.jadwalData['class_id'])
-            .where('hari_id', isEqualTo: widget.jadwalData['hari_id'])
-            .where('matkul_id', isEqualTo: widget.jadwalData['matkul_id'])
-            .where('dosen_id', isEqualTo: widget.userData['nama'])
-            .where('tanggal', isEqualTo: onlyDate)
-            .get();
-
-        if (presensiSnapshot.docs.isNotEmpty) {
-          for (var doc in presensiSnapshot.docs) {
-            await FirebaseFirestore.instance
-                .collection('presensi')
-                .doc(doc.id)
-                .delete();
-          }
-        }
-      } catch (e) {
-        Fluttertoast.showToast(msg: 'Gagal menghapus presensi sebelumnya: $e');
-      }
-    }
-
     if (dateTime != null) {
       print('dateTime is not null');
       if (isSameDay(now, dateTime)) {
@@ -545,10 +518,9 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
           print('Current time is after endTime');
           if (!_hasCheckedIn) {
             print('User has not checked in');
-            _handleAttendance("Lupa Presensi", "Null", 0);
+            // _handleAttendance("Lupa Presensi", "Null", 0);
             Fluttertoast.showToast(
                 msg: 'Anda Lupa melakukan presensi, Silahkan Lapor Ke BAAK.');
-            _deletePreviousAttendance();
           }
         }
       }
@@ -694,11 +666,11 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
                               style: TextStyle(color: Colors.red),
                             )
                           else
-                            const Text(
-                              'Anda sudah melakukan presensi',
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          SizedBox(height: 20),
+                            // const Text(
+                            //   'Anda sudah melakukan presensi',
+                            //   style: TextStyle(color: Colors.red),
+                            // ),
+                            SizedBox(height: 20),
                           if (_currentPosition != null)
                             FutureBuilder(
                               future: _getAddressFromLatLng(

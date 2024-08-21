@@ -103,10 +103,6 @@ class _ListJadwalState extends State<ListJadwal> {
     return query.snapshots();
   }
 
-  void filterJadwalList() {
-    // This method is no longer needed since StreamBuilder handles filtering
-  }
-
   void resetFilters() {
     setState(() {
       selectedHari = null;
@@ -116,12 +112,10 @@ class _ListJadwalState extends State<ListJadwal> {
       kelasMap.clear();
       matkulMap.clear();
     });
-    // No need to call fetchJadwalList() here
   }
 
   void deleteJadwal(String docId) async {
     await _firestore.collection('jadwal').doc(docId).delete();
-    // No need to call fetchJadwalList() here
   }
 
   void editJadwal(String docId) {
@@ -147,7 +141,6 @@ class _ListJadwalState extends State<ListJadwal> {
                       setState(() {
                         selectedHari = value;
                       });
-                      // No need to call filterJadwalList()
                     },
                     decoration: InputDecoration(
                       labelText: 'Hari',
@@ -171,7 +164,6 @@ class _ListJadwalState extends State<ListJadwal> {
                         selectedMatkul = null;
                         _fetchKelas(value!);
                       });
-                      // No need to call filterJadwalList()
                     },
                     decoration: InputDecoration(
                       labelText: 'Semester',
@@ -198,7 +190,6 @@ class _ListJadwalState extends State<ListJadwal> {
                         selectedMatkul = null;
                         _fetchMatkul(value!);
                       });
-                      // No need to call filterJadwalList()
                     },
                     decoration: InputDecoration(
                       labelText: 'Kelas',
@@ -219,7 +210,6 @@ class _ListJadwalState extends State<ListJadwal> {
                       setState(() {
                         selectedMatkul = value;
                       });
-                      // No need to call filterJadwalList()
                     },
                     decoration: InputDecoration(
                       labelText: 'Matkul',
@@ -324,19 +314,19 @@ class _ListJadwalState extends State<ListJadwal> {
                 },
               ),
             ),
-            FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => JadwalMahasiswa(),
-                  ),
-                );
-              },
-              child: Icon(Icons.add),
-            ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => JadwalMahasiswa(),
+            ),
+          );
+        },
+        child: Icon(Icons.add),
       ),
     );
   }
