@@ -120,7 +120,7 @@ class _CekPresensiMahasiswaState extends State<CekPresensiMahasiswa> {
         .collection('users')
         .where('user_type', isEqualTo: 3)
         .where('class_id', isEqualTo: selectedClass)
-        .where('semester_id', isEqualTo: selectedSemester)
+        // .where('semester_id', isEqualTo: selectedSemester)
         .get();
 
     setState(() {
@@ -168,20 +168,6 @@ class _CekPresensiMahasiswaState extends State<CekPresensiMahasiswa> {
             Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      labelText: 'Cari Nama',
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedStudent = value.trim();
-                      });
-                    },
-                  ),
-                ),
-                SizedBox(width: 16),
-                Expanded(
                   child: DropdownButtonFormField<String>(
                     decoration: InputDecoration(
                       labelText: 'Semester',
@@ -205,11 +191,7 @@ class _CekPresensiMahasiswaState extends State<CekPresensiMahasiswa> {
                     },
                   ),
                 ),
-              ],
-            ),
-            SizedBox(height: 16),
-            Row(
-              children: [
+                SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     decoration: InputDecoration(
@@ -229,6 +211,24 @@ class _CekPresensiMahasiswaState extends State<CekPresensiMahasiswa> {
                         fetchMatkulList(value!);
                         selectedMatkul = null;
                         fetchTotalMahasiswa();
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      labelText: 'Cari Nama',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedStudent = value.trim();
                       });
                     },
                   ),

@@ -263,7 +263,7 @@ class _PresensiDosenState extends State<PresensiDosen> {
       final profileImageFile = await _getProfileImage(user.uid);
 
       // Kirim gambar ke server Flask
-      final uri = Uri.parse("http://10.23.1.183:5000/compare-faces");
+      final uri = Uri.parse("http://192.168.1.2:5000/compare-faces");
       final request = http.MultipartRequest('POST', uri)
         ..files.add(await http.MultipartFile.fromPath('image1', imageFile.path))
         ..files.add(
@@ -453,6 +453,13 @@ class _PresensiDosenState extends State<PresensiDosen> {
       await FirebaseFirestore.instance
           .collection('presensi')
           .add(attendanceData);
+
+      // Update tanggal pada tabel jadwal menjadi 7 hari ke depan
+      DateTime newDate = onlyDate.add(Duration(days: 7));
+      await FirebaseFirestore.instance
+          .collection('jadwal')
+          .doc(widget.jadwalData['id'])
+          .update({'tanggal': newDate});
       setState(() {
         _hasCheckedIn = true;
       });

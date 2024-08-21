@@ -104,9 +104,9 @@ class _AddPresensiMahasiswaState extends State<AddPresensiMahasiswa> {
   Future<void> fetchMahasiswaList() async {
     var snapshot = await FirebaseFirestore.instance
         .collection('users')
-        .where('user_type', isEqualTo: 3)
         .where('class_id', isEqualTo: selectedKelas)
-        .where('semester_id', isEqualTo: selectedSemester)
+        .where('user_type', isEqualTo: 3)
+        // .where('semester_id', isEqualTo: selectedSemester)
         .get();
 
     setState(() {

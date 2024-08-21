@@ -105,20 +105,6 @@ class _RekapPresensiDosenFilteredState
             Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      labelText: 'Cari Nama',
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedStudent = value.trim();
-                      });
-                    },
-                  ),
-                ),
-                SizedBox(width: 16),
-                Expanded(
                   child: DropdownButtonFormField<String>(
                     decoration: InputDecoration(
                       labelText: 'Semester',
@@ -142,12 +128,7 @@ class _RekapPresensiDosenFilteredState
                     },
                   ),
                 ),
-              ],
-            ),
-            SizedBox(height: 16),
-            // Row for filters
-            Row(
-              children: [
+                SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     decoration: InputDecoration(
@@ -166,6 +147,25 @@ class _RekapPresensiDosenFilteredState
                         selectedClass = value;
                         fetchMatkulList(value!);
                         selectedMatkul = null;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            // Row for filters
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      labelText: 'Cari Nama',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedStudent = value.trim();
                       });
                     },
                   ),

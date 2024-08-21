@@ -260,7 +260,7 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
       final profileImageFile = await _getProfileImage(user.uid);
 
       // Kirim gambar ke server Flask
-      final uri = Uri.parse("http://10.23.1.183:5000/compare-faces");
+      final uri = Uri.parse("http://192.168.1.2:5000/compare-faces");
       final request = http.MultipartRequest('POST', uri)
         ..files.add(await http.MultipartFile.fromPath('image1', imageFile.path))
         ..files.add(
