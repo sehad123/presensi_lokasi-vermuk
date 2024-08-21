@@ -13,6 +13,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:presensi_app/mahasiswa/mypresensi_mahasiswa.dart';
 import 'package:presensi_app/notification_helper.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -233,28 +234,103 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
   }
 
   Future<void> _takePicture() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-    if (image != null && image.path != "Null") {
-      final faceImageUrl = await _uploadFaceImage(File(image.path));
-      _handleAttendance('Tepat Waktu', faceImageUrl, 100);
-    } else {
-      Fluttertoast.showToast(msg: 'Gambar tidak diambil.');
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+
+      if (image != null) {
+        await _verifyFace(File(image.path));
+      } else {
+        Fluttertoast.showToast(msg: 'Gambar tidak diambil.');
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+          msg: 'Terjadi kesalahan saat mengambil gambar: $e');
+    }
+  }
+
+  Future<void> _verifyFace(File imageFile) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      Fluttertoast.showToast(msg: 'User not logged in.');
+      return;
+    }
+
+    try {
+      // Dapatkan gambar profil dari Firebase
+      final profileImageFile = await _getProfileImage(user.uid);
+
+      // Kirim gambar ke server Flask
+      final uri = Uri.parse("http://10.23.1.183:5000/compare-faces");
+      final request = http.MultipartRequest('POST', uri)
+        ..files.add(await http.MultipartFile.fromPath('image1', imageFile.path))
+        ..files.add(
+            await http.MultipartFile.fromPath('image2', profileImageFile.path));
+
+      final response = await request.send();
+      final responseData = await http.Response.fromStream(response);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> result = jsonDecode(responseData.body);
+
+        if (result['success'] && result['match']) {
+          final faceImageUrl = await _uploadFaceImage(imageFile);
+          _handleAttendance('Tepat Waktu', faceImageUrl, 100);
+        } else {
+          Fluttertoast.showToast(msg: 'Verifikasi wajah gagal.');
+        }
+      } else {
+        Fluttertoast.showToast(
+            msg:
+                'Gagal terhubung ke server. Status code: ${response.statusCode}, Body: ${responseData.body}');
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+          msg: 'Terjadi kesalahan saat memverifikasi wajah: $e');
+    }
+  }
+
+  Future<File> _getProfileImage(String userId) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      final String? imageUrl = doc.data()?['profile_img'];
+
+      if (imageUrl == null) {
+        Fluttertoast.showToast(msg: 'Gambar profil tidak ditemukan.');
+        throw Exception('Gambar profil tidak ditemukan.');
+      }
+
+      final response = await http.get(Uri.parse(imageUrl));
+      final bytes = response.bodyBytes;
+
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/profile_image.jpg');
+      await file.writeAsBytes(bytes);
+
+      return file;
+    } catch (e) {
+      Fluttertoast.showToast(
+          msg: 'Terjadi kesalahan saat mengambil gambar profil: $e');
+      rethrow;
     }
   }
 
   Future<String> _uploadFaceImage(File imageFile) async {
-    final userId = FirebaseAuth.instance.currentUser!.uid;
-    final storageRef = FirebaseStorage.instance
-        .ref()
-        .child('face_images')
-        .child('$userId-${DateTime.now().millisecondsSinceEpoch}.jpg');
-
     try {
+      final userId = FirebaseAuth.instance.currentUser!.uid;
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('face_image')
+          .child('$userId-${DateTime.now().millisecondsSinceEpoch}.jpg');
+
       await storageRef.putFile(imageFile);
       final downloadUrl = await storageRef.getDownloadURL();
       return downloadUrl;
     } catch (e) {
-      throw Exception('Gagal mengupload gambar wajah: $e');
+      Fluttertoast.showToast(msg: 'Gagal mengupload gambar wajah: $e');
+      rethrow;
     }
   }
 
@@ -665,12 +741,17 @@ class _PresensiMahasiswaState extends State<PresensiMahasiswa> {
                               'Presensi hanya bisa dilakukan ketika memasuki jam pelajaran',
                               style: TextStyle(color: Colors.red),
                             )
+                          else if (_hasCheckedIn)
+                            const Text(
+                              'Anda sudah melakukan presensi',
+                              style: TextStyle(color: Colors.red),
+                            )
                           else
-                            // const Text(
-                            //   'Anda sudah melakukan presensi',
-                            //   style: TextStyle(color: Colors.red),
-                            // ),
-                            SizedBox(height: 20),
+                            const Text(
+                              'Presensi hanya bisa dilakukan ketika memasuki jam pelajaran',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          SizedBox(height: 20),
                           if (_currentPosition != null)
                             FutureBuilder(
                               future: _getAddressFromLatLng(
